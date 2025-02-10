@@ -1,0 +1,1893 @@
+{
+    "name": "Night",
+	"simulation_type": "Static",
+
+	"1071771887": {
+		"name": "Coal powerplant",
+		"voltage": "HV",
+		"generators": [
+			{
+				"type": "Generator",
+				"p_nom": 60,
+				"p_nom_extendable": false,
+				"marginal_cost": 90
+			}
+		]
+	},
+	"3113052135": {
+		"name": "Huisman Half Roof",
+		"voltage": "LV,MV",
+		"generators":[
+			{
+			"type":"Generator",
+			"p_nom":7.44
+			}
+		]
+	},
+	"1933784839": {
+		"name": "Huisman Green",
+		"voltage": "LV,MV",
+		"generators":[
+			{
+			"type":"Generator",
+			"p_nom":7.44
+			}
+		]
+	},
+	"699096041": {
+		"name": "Huisman Full Roof",
+		"voltage": "LV,MV",
+		"generators":[
+			{
+			"type":"Generator",
+			"p_nom":31,
+			"p_min_pu":1
+			}
+		]
+	},
+	"2741240903": {
+		"name": "Huisman",
+		"voltage": "LV,MV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 1.19
+			}
+		]
+	},
+	"597376903": {
+		"name": "Office building",
+		"voltage": "MV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 0.12
+			}
+		]
+	},
+	"1943818419": {
+		"name": "Office building 2",
+		"voltage": "MV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 0.12
+			}
+		]
+	},
+	"3914565692": {
+		"name": "Office building 3",
+		"voltage": "MV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 0.12
+			}
+		]
+	},
+	"3521188869": {
+		"name": "Office Building Solar East/West",
+		"voltage": "MV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 0.12
+			}
+		],
+		"generators":[
+			{
+				"type":"Generator",
+				"p_nom":0.06
+			}
+		]
+	},
+	"597995847": {
+		"name": "Office Building Solar East/West 2",
+		"voltage": "MV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 0.12
+			}
+		],
+		"generators":[
+			{
+				"type":"Generator",
+				"p_nom":0.06
+			}
+		]
+	},
+	"3914692611": {
+		"name": "Office Building Solar East/West 3",
+		"voltage": "MV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 0.12
+			}
+		],
+		"generators":[
+			{
+				"type":"Generator",
+				"p_nom":0.06
+			}
+		]
+	},
+	"699147784": {
+		"name": "Office Building Solar South",
+		"voltage": "MV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 0.12
+			}
+		],
+		"generators":[
+			{
+				"type":"Generator",
+				"p_nom":0.18
+			}
+		]
+	},
+	"3520871957": {
+		"name": "Office Building Solar South 2",
+		"voltage": "MV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 0.12
+			}
+		],
+		"generators":[
+			{
+				"type":"Generator",
+				"p_nom":0.18
+			}
+		]
+	},
+	"2741393916": {
+		"name": "Office Building Solar South 3",
+		"voltage": "MV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 0.12
+			}
+		],
+		"generators":[
+			{
+				"type":"Generator",
+				"p_nom":0.18
+			}
+		]
+	},
+	"597840855": {
+		"name": "Coal powerplant 1",
+		"voltage": "HV",
+		"generators": [
+			{
+				"type": "Generator",
+				"p_nom": 60,
+				"p_nom_extendable": false,
+				"marginal_cost": 90
+			}
+		]
+	},
+	"1842809804": {
+		"name": "In/export",
+		"voltage": "HV",
+		"generators": [
+			{
+				"type": "Generator",
+				"p_nom": 9999999999999999999,
+				"p_nom_extendable": false,
+				"marginal_cost": 120
+			}
+		]
+	},
+	
+	"3521188869": {
+		"name": "Office Building Solar East/West",
+		"voltage": "MV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 0.12
+			}
+		],
+		"generators":[
+			{
+				"type":"Generator",
+				"p_nom":0.06
+			}
+		]
+	},
+	"597995847": {
+		"name": "Office Building Solar East/West 2",
+		"voltage": "MV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 0.12
+			}
+		],
+		"generators":[
+			{
+				"type":"Generator",
+				"p_nom":0.06
+			}
+		]
+	},
+	"3914692611": {
+		"name": "Office Building Solar East/West 3",
+		"voltage": "MV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 0.12
+			}
+		],
+		"generators":[
+			{
+				"type":"Generator",
+				"p_nom":0.06
+			}
+		]
+	},
+	"699147784": {
+		"name": "Office Building Solar South",
+		"voltage": "MV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 0.12
+			}
+		],
+		"generators":[
+			{
+				"type":"Generator",
+				"p_nom":0.18
+			}
+		]
+	},
+	"3520871957": {
+		"name": "Office Building Solar South 2",
+		"voltage": "MV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 0.12
+			}
+		],
+		"generators":[
+			{
+				"type":"Generator",
+				"p_nom":0.18
+			}
+		]
+	},
+	"2741393916": {
+		"name": "Office Building Solar South 3",
+		"voltage": "MV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 0.12
+			}
+		],
+		"generators":[
+			{
+				"type":"Generator",
+				"p_nom":0.18
+			}
+		]
+	},
+	"1233676834": {
+		"name": "Distribution Center",
+		"voltage": "MV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 10
+			}
+		]
+	},
+	"2741326365": {
+		"name": "Distribution Center 2",
+		"voltage": "MV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 10
+			}
+		]
+	},
+	"3418323627": {
+		"name": "Distribution Center 3",
+		"voltage": "MV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 10
+			}
+		]
+	},
+	"1503711881": {
+		"name": "Distribution Center Solar East/West",
+		"voltage": "MV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 10
+			}
+		],
+		"generators":[
+			{
+				"type":"Generator",
+				"p_nom":5
+			}
+		]
+	},
+	"699152481": {
+		"name": "Distribution Center Solar East/West 2",
+		"voltage": "MV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 10
+			}
+		],
+		"generators":[
+			{
+				"type":"Generator",
+				"p_nom":5
+			}
+		]
+	},
+	"1942435033": {
+		"name": "Distribution Center Solar East/West 3",
+		"voltage": "MV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 10
+			}
+		],
+		"generators":[
+			{
+				"type":"Generator",
+				"p_nom":5
+			}
+		]
+	},
+	"699104855": {
+		"name": "Distribution Center Solar South",
+		"voltage": "MV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 10
+			}
+		],
+		"generators":[
+			{
+				"type":"Generator",
+				"p_nom":15
+			}
+		]
+	},
+	"2041811820": {
+		"name": "Distribution Center Solar South 2",
+		"voltage": "MV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 10
+			}
+		],
+		"generators":[
+			{
+				"type":"Generator",
+				"p_nom":15
+			}
+		]
+	},
+	"597989223": {
+		"name": "Factory Solar East/West",
+		"voltage": "MV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 22
+			}
+		],
+		"generators":[
+			{
+				"type":"Generator",
+				"p_nom":8
+			}
+		]
+	},
+	"1943551530": {
+		"name": "Factory Solar East/West 2",
+		"voltage": "MV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 22
+			}
+		],
+		"generators":[
+			{
+				"type":"Generator",
+				"p_nom":8
+			}
+		]
+	},
+	"1503726165": {
+		"name": "Factory Solar East/West 3",
+		"voltage": "MV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 22
+			}
+		],
+		"generators":[
+			{
+				"type":"Generator",
+				"p_nom":8
+			}
+		]
+	},
+	"2304247342": {
+		"name": "Factory Solar South",
+		"voltage": "MV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 22
+			}
+		],
+		"generators":[
+			{
+				"type":"Generator",
+				"p_nom":14
+			}
+		]
+	},
+	"2836070624": {
+		"name": "Factory Solar South 2",
+		"voltage": "MV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 22
+			}
+		],
+		"generators":[
+			{
+				"type":"Generator",
+				"p_nom":14
+			}
+		]
+	},
+	"8881225": {
+		"name": "Factory Solar South 3",
+		"voltage": "MV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 22
+			}
+		],
+		"generators":[
+			{
+				"type":"Generator",
+				"p_nom":14
+			}
+		]
+	},
+	"8427001": {
+		"name": "Distribution Center Solar South 3",
+		"voltage": "MV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 10
+			}
+		],
+		"generators":[
+			{
+				"type":"Generator",
+				"p_nom":15
+			}
+		]
+	},
+	"1071966141": {
+		"name": "Gas powerplant",
+		"voltage": "HV",
+		"generators": [
+			{
+				"type": "Generator",
+				"p_nom": 65,
+				"p_nom_extendable": false,
+				"marginal_cost": 95
+			}
+		]
+	},
+	"939873420": {
+		"name": "Gas powerplant 1",
+		"voltage": "HV",
+		"generators": [
+			{
+				"type": "Generator",
+				"p_nom": 65,
+				"p_nom_extendable": false,
+				"marginal_cost": 95
+			}
+		]
+	},
+	"938920444": {
+		"name": "Gas powerplant 2",
+		"voltage": "HV",
+		"generators": [
+			{
+				"type": "Generator",
+				"p_nom": 65,
+				"p_nom_extendable": false,
+				"marginal_cost": 95
+			}
+		]
+	},
+	"646876305": {
+		"name": "Nuclear p.p.1",
+		"voltage": "HV",
+		"generators": [
+			{
+				"type": "Generator",
+				"p_nom": 55,
+				"p_nom_extendable": false,
+				"marginal_cost": 95
+			}
+		]
+	},
+	"1857348684": {
+		"name": "Nuclear p.p.",
+		"voltage": "HV",
+		"generators": [
+			{
+				"type": "Generator",
+				"p_nom": 55,
+				"p_nom_extendable": false,
+				"marginal_cost": 95
+			}
+		]
+	},
+	"569209056": {
+		"name": "Offshore Win",
+		"voltage": "HV",
+		"generators": [
+			{
+				"type": "Generator",
+				"p_nom": 55,
+				"p_nom_extendable": false,
+				"marginal_cost": 55
+			}
+		]
+	},
+	"1071766506": {
+		"name": "Solar farm small 2",
+		"voltage": "MV",
+		"generators": [
+			{
+				"type": "Generator",
+				"p_nom": 0,
+				"p_nom_extendable": false,
+				"marginal_cost": 87
+			}
+		]
+	},
+	"643269249": {
+		"name": "Solar farm small 3",
+		"voltage": "MV",
+		"generators": [
+			{
+				"type": "Generator",
+				"p_nom": 0,
+				"p_nom_extendable": false,
+				"marginal_cost": 87
+			}
+		]
+	},
+	"937832332": {
+		"name": "Solar farm small 4",
+		"voltage": "MV",
+		"generators": [
+			{
+				"type": "Generator",
+				"p_nom": 0,
+				"p_nom_extendable": false,
+				"marginal_cost": 87
+			}
+		]
+	},
+	"522288734": {
+		"name": "Solar farm small 5",
+		"voltage": "MV",
+		"generators": [
+			{
+				"type": "Generator",
+				"p_nom": 0,
+				"p_nom_extendable": false,
+				"marginal_cost": 87
+			}
+		]
+	},
+	"699113953": {
+		"name": "Solar farm small 6",
+		"voltage": "MV",
+		"generators": [
+			{
+				"type": "Generator",
+				"p_nom": 0,
+				"p_nom_extendable": false,
+				"marginal_cost": 87
+			}
+		]
+	},
+	"2305996940": {
+		"name": "Solar farm small 7",
+		"voltage": "MV",
+		"generators": [
+			{
+				"type": "Generator",
+				"p_nom": 0,
+				"p_nom_extendable": false,
+				"marginal_cost": 87
+			}
+		]
+	},
+	"3522777701": {
+		"name": "Solar farm small 8",
+		"voltage": "MV",
+		"generators": [
+			{
+				"type": "Generator",
+				"p_nom": 0,
+				"p_nom_extendable": false,
+				"marginal_cost": 87
+			}
+		]
+	},
+	"599147159": {
+		"name": "Solar farm small 9",
+		"voltage": "MV",
+		"generators": [
+			{
+				"type": "Generator",
+				"p_nom": 0,
+				"p_nom_extendable": false,
+				"marginal_cost": 87
+			}
+		]
+	},
+	"1071741103": {
+		"name": "Wind and solar",
+		"voltage": "MV",
+		"generators": [
+			{
+				"type": "Generator",
+				"p_nom": 6.93,
+				"p_nom_extendable": false,
+				"marginal_cost": 59
+			}
+		]
+	},
+	"569577184": {
+		"name": "Wind and solar 2",
+		"voltage": "MV",
+		"generators": [
+			{
+				"type": "Generator",
+				"p_nom": 6.93,
+				"p_nom_extendable": false,
+				"marginal_cost": 59
+			}
+		]
+	},
+	"937326332": {
+		"name": "Wind and solar 3",
+		"voltage": "MV",
+		"generators": [
+			{
+				"type": "Generator",
+				"p_nom": 6.93,
+				"p_nom_extendable": false,
+				"marginal_cost": 59
+			}
+		]
+	},
+	"1071972725": {
+		"name": "StorageMV1",
+		"voltage": "MV",
+		"storages": [
+			{
+				"type": "Storage",
+				"p_nom": 3,
+				"p_nom_extendable": false,
+				"state_of_charge_initial": 1,
+				"marginal_cost": 40
+			}
+		]
+	},
+	"1072060342": {
+		"name": "StorageMV2",
+		"voltage": "MV",
+		"storages": [
+			{
+				"type": "Storage",
+				"p_nom": 3,
+				"p_nom_extendable": false,
+				"state_of_charge_initial": 1,
+				"marginal_cost": 40
+			}
+		]
+	},
+	"1072039450": {
+		"name": "StorageLV1",
+		"voltage": "LV",
+		"storages": [
+			{
+				"type": "Storage",
+				"p_nom": 1,
+				"p_nom_extendable": false,
+				"state_of_charge_initial": 0.7,
+				"marginal_cost": 40
+			}
+		]
+	},
+	"522462503": {
+		"name": "StorageLV2",
+		"voltage": "LV",
+		"storages": [
+			{
+				"type": "Storage",
+				"p_nom": 1,
+				"p_nom_extendable": false,
+				"state_of_charge_initial": 0.7,
+				"marginal_cost": 40
+			}
+		]
+	},
+	"937317628": {
+		"name": "StorageLV3",
+		"voltage": "LV",
+		"storages": [
+			{
+				"type": "Storage",
+				"p_nom": 1,
+				"p_nom_extendable": false,
+				"state_of_charge_initial": 0.7,
+				"marginal_cost": 40
+			}
+		]
+	},
+	"2041808452": {
+		"name": "StorageLV4",
+		"voltage": "LV",
+		"storages": [
+			{
+				"type": "Storage",
+				"p_nom": 1,
+				"p_nom_extendable": false,
+				"state_of_charge_initial": 0.7,
+				"marginal_cost": 40
+			}
+		]
+	},
+	"939750364": {
+		"name": "StorageLV5",
+		"voltage": "LV",
+		"storages": [
+			{
+				"type": "Storage",
+				"p_nom": 1,
+				"p_nom_extendable": false,
+				"state_of_charge_initial": 0.7,
+				"marginal_cost": 40
+			}
+		]
+	},
+	"557207504": {
+		"name": "StorageLV6",
+		"voltage": "LV",
+		"storages": [
+			{
+				"type": "Storage",
+				"p_nom": 1,
+				"p_nom_extendable": false,
+				"state_of_charge_initial": 0.7,
+				"marginal_cost": 40
+			}
+		]
+	},
+	"1071746625": {
+		"name": "HV-MV TF1",
+		"voltage": "HV",
+		"transformer": [
+			{
+				"type": "63 MVA 110/10 kV"
+			}
+		]
+	},
+	"1071763866": {
+		"name": "HV-MV TF2",
+		"voltage": "HV",
+		"transformer": [
+			{
+				"type": "63 MVA 110/10 kV"
+			}
+		]
+	},
+	"522250702": {
+		"name": "HV-MV TF3",
+		"voltage": "HV",
+		"transformer": [
+			{
+				"type": "63 MVA 110/10 kV"
+			}
+		]
+	},
+	"938476188": {
+		"name": "HV-MV TF4",
+		"voltage": "HV",
+		"transformer": [
+			{
+				"type": "63 MVA 110/10 kV"
+			}
+		]
+	},
+	"939879932": {
+		"name": "HV-MV TF5",
+		"voltage": "HV",
+		"transformer": [
+			{
+				"type": "63 MVA 110/10 kV"
+			}
+		]
+	},
+	"3113060275": {
+		"name": "HV-MV TF6",
+		"voltage": "HV",
+		"transformer": [
+			{
+				"type": "63 MVA 110/10 kV"
+			}
+		]
+	},
+	"1071746557": {
+		"name": "MV-LV TF 1",
+		"voltage": "LV",
+		"transformer": [
+			{
+				"type": "0.63 MVA 10/0.4 kV"
+			}
+		]
+	},
+	"1072051579": {
+		"name": "MV-LV TF 2",
+		"voltage": "LV",
+		"transformer": [
+			{
+				"type": "0.63 MVA 10/0.4 kV"
+			}
+		]
+	},
+	"1072040213": {
+		"name": "MV-LV TF 3",
+		"voltage": "LV",
+		"transformer": [
+			{
+				"type": "0.63 MVA 10/0.4 kV"
+			}
+		]
+	},
+	"556416736": {
+		"name": "MV-LV TF 4",
+		"voltage": "LV",
+		"transformer": [
+			{
+				"type": "0.63 MVA 10/0.4 kV"
+			}
+		]
+	},
+	"939153356": {
+		"name": "MV-LV TF 5",
+		"voltage": "LV",
+		"transformer": [
+			{
+				"type": "0.63 MVA 10/0.4 kV"
+			}
+		]
+	},
+	"937267644": {
+		"name": "MV-LV TF 6",
+		"voltage": "LV",
+		"transformer": [
+			{
+				"type": "0.63 MVA 10/0.4 kV"
+			}
+		]
+	},
+	"699120918": {
+		"name": "MV-LV TF 7",
+		"voltage": "LV",
+		"transformer": [
+			{
+				"type": "0.63 MVA 10/0.4 kV"
+			}
+		]
+	},
+	"699151512": {
+		"name": "MV-LV TF 8",
+		"voltage": "LV",
+		"transformer": [
+			{
+				"type": "0.63 MVA 10/0.4 kV"
+			}
+		]
+	},
+	"3210234970": {
+		"name": "MV-LV TF 9",
+		"voltage": "LV",
+		"transformer": [
+			{
+				"type": "0.63 MVA 10/0.4 kV"
+			}
+		]
+	},
+	"1072066624": {
+		"name": "Processing factory",
+		"voltage": "MV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 22
+			}
+		]
+	},
+	"938675548": {
+		"name": "Processing factory 2",
+		"voltage": "MV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 22
+			}
+		]
+	},
+	"521964257": {
+		"name": "Processing factory 3",
+		"voltage": "MV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 22
+			}
+		]
+	},
+	"2041806607": {
+		"name": "Processing factory 4",
+		"voltage": "MV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 22
+			}
+		]
+	},
+	"939297100": {
+		"name": "Processing factory 5",
+		"voltage": "MV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 22
+			}
+		]
+	},
+	"1071780135": {
+		"name": "Car charging station 1",
+		"voltage": "MV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 0.48
+			}
+		]
+	},
+	"1072051546": {
+		"name": "Chemical factory",
+		"voltage": "MV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 10
+			}
+		]
+	},
+	"522332469": {
+		"name": "Chemical factory 2",
+		"voltage": "MV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 10
+			}
+		]
+	},
+	"2835876690": {
+		"name": "Chemical factory 3",
+		"voltage": "MV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 10
+			}
+		]
+	},
+	"6695145": {
+		"name": "Chemical factory 4",
+		"voltage": "MV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 10
+			}
+		]
+	},
+	"1071991074": {
+		"name": "Hydro station",
+		"voltage": "MV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 0.096
+			}
+		]
+	},
+	"1071729488": {
+		"name": "HAN",
+		"voltage": "MV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 0.08
+			}
+		]
+	},
+	"954001740": {
+		"name": "HAN-1",
+		"voltage": "MV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 0.08
+			}
+		]
+	},
+	"438342404": {
+		"name": "HAN-2",
+		"voltage": "LV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 0.02
+			}
+		]
+	},
+	"939982460": {
+		"name": "HAN-3",
+		"voltage": "LV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 0.02
+			}
+		]
+	},
+	"653335697": {
+		"name": "HAN-4",
+		"voltage": "LV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 0.02
+			}
+		]
+	},
+	"939873660": {
+		"name": "HAN-5",
+		"voltage": "LV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 0.02
+			}
+		]
+	},
+	"1856465452": {
+		"name": "HAN-6",
+		"voltage": "LV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 0.02
+			}
+		]
+	},
+	"8777433": {
+		"name": "HAN-7",
+		"voltage": "LV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 0.02
+			}
+		]
+	},
+	"1503720370": {
+		"name": "HAN-8",
+		"voltage": "LV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 0.02
+			}
+		]
+	},
+	"1071769060": {
+		"name": "Car charging station 2",
+		"voltage": "MV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 0.48
+			}
+		]
+	},
+	"954140300": {
+		"name": "Car charging station 3",
+		"voltage": "MV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 0.48
+			}
+		]
+	},
+	"1933840483": {
+		"name": "Car charging station 4",
+		"voltage": "MV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 0.48
+			}
+		]
+	},
+	"522132660": {
+		"name": "Car charging station 5",
+		"voltage": "MV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 0.48
+			}
+		]
+	},
+	"1071985354": {
+		"name": "Terrace houses 1",
+		"voltage": "LV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 0.0215
+			}
+		]
+	},
+	"1072063229": {
+		"name": "Terrace houses 2",
+		"voltage": "LV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 0.0215
+			}
+		]
+	},
+	"1072056604": {
+		"name": "Terrace houses 3",
+		"voltage": "LV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 0.0215
+			}
+		]
+	},
+	"699168295": {
+		"name": "Terrace houses 4",
+		"voltage": "LV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 0.0215
+			}
+		]
+	},
+	"2305939010": {
+		"name": "Terrace houses 5",
+		"voltage": "LV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 0.0215
+			}
+		]
+	},
+	"2836102489": {
+		"name": "Terrace houses 6",
+		"voltage": "LV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 0.0215
+			}
+		]
+	},
+	"562332880": {
+		"name": "Terrace houses 7",
+		"voltage": "LV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 0.0215
+			}
+		]
+	},
+	"1131372432": {
+		"name": "Terrace houses 8",
+		"voltage": "LV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 0.0215
+			}
+		]
+	},
+	"554665696": {
+		"name": "Terrace houses 9",
+		"voltage": "LV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 0.0215
+			}
+		]
+	},
+	"647833713": {
+		"name": "Terrace houses 10",
+		"voltage": "LV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 0.0215
+			}
+		]
+	},
+	"3210133050": {
+		"name": "Terrace houses 11",
+		"voltage": "LV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 0.0215
+			}
+		]
+	},
+	"646755441": {
+		"name": "Terrace houses 12",
+		"voltage": "LV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 0.0215
+			}
+		]
+	},
+	"939405964": {
+		"name": "Terrace houses 13",
+		"voltage": "LV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 0.0215
+			}
+		]
+	},
+	"936531260": {
+		"name": "Terrace houses 14",
+		"voltage": "LV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 0.0215
+			}
+		]
+	},
+	"939188716": {
+		"name": "Terrace houses 15",
+		"voltage": "LV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 0.0215
+			}
+		]
+	},
+	"1071986763": {
+		"name": "House 1",
+		"voltage": "LV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 0.01505
+			}
+		]
+	},
+	"1072063101": {
+		"name": "House 2",
+		"voltage": "LV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 0.01505
+			}
+		]
+	},
+	"2298616020": {
+		"name": "House 3",
+		"voltage": "LV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 0.01505
+			}
+		]
+	},
+	"1071733508": {
+		"name": "House 4",
+		"voltage": "LV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 0.01505
+			}
+		]
+	},
+	"3914547211": {
+		"name": "House 5",
+		"voltage": "LV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 0.01505
+			}
+		]
+	},
+	"939772716": {
+		"name": "House 6",
+		"voltage": "LV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 0.06
+			}
+		]
+	},
+	"937120396": {
+		"name": "House 7",
+		"voltage": "LV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 0.06
+			}
+		]
+	},
+	"1138387088": {
+		"name": "House 8",
+		"voltage": "LV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 0.06
+			}
+		]
+	},
+	"569791696": {
+		"name": "House 9",
+		"voltage": "LV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 0.11
+			}
+		]
+	},
+	"1071773816": {
+		"name": "Storage house 1",
+		"voltage": "LV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 0.003
+			}
+		]
+	},
+	"1071780377": {
+		"name": "Storage house 2",
+		"voltage": "LV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 0.003
+			}
+		]
+	},
+	"938353708": {
+		"name": "Storage house 3",
+		"voltage": "LV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 0.003
+			}
+		]
+	},
+	"1131243920": {
+		"name": "Storage house 4",
+		"voltage": "LV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 0.003
+			}
+		]
+	},
+	"638287489": {
+		"name": "pakhuis 1",
+		"voltage": "LV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 0.003
+			}
+		]
+	},
+	"995708241": {
+		"name": "pakhuis 2",
+		"voltage": "LV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 0.003
+			}
+		]
+	},
+
+	"1071770985": {
+		"name": "Appartment 1",
+		"voltage": "LV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 0.02025
+			}
+		]
+	},
+	"7304921": {
+		"name": "Appartment 2",
+		"voltage": "LV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 0.02025
+			}
+		]
+	},
+	"593072732": {
+		"name": "Appartment 3",
+		"voltage": "LV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 0.02025
+			}
+		]
+	},
+	"1071753108": {
+		"name": "Appartment 4",
+		"voltage": "LV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 0.02025
+			}
+		]
+	},
+	"2836099420": {
+		"name": "Appartment 5",
+		"voltage": "LV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 0.02025
+			}
+		]
+	},
+	"1840834860": {
+		"name": "Appartment 6",
+		"voltage": "LV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 0.02025
+			}
+		]
+	},
+	"939329388": {
+		"name": "Appartment 7",
+		"voltage": "LV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 0.02025
+			}
+		]
+	},
+	"563187664": {
+		"name": "Appartment 8",
+		"voltage": "LV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 0.02025
+			}
+		]
+	},
+	"639326097": {
+		"name": "Appartment 9",
+		"voltage": "LV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 0.02025
+			}
+		]
+	},
+	"939878172": {
+		"name": "Appartment 10",
+		"voltage": "LV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 0.02025
+			}
+		]
+	},
+	"937732812": {
+		"name": "Appartment 11",
+		"voltage": "LV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 0.02025
+			}
+		]
+	},
+	"939450748": {
+		"name": "Appartment 12",
+		"voltage": "LV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 0.02025
+			}
+		]
+	},
+	"2741472141": {
+		"name": "Appartment 13",
+		"voltage": "LV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 0.02025
+			}
+		]
+	},
+	"45988561": {
+		"name": "Appartment 14",
+		"voltage": "LV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 0.02025
+			}
+		]
+	},
+	"597999943": {
+		"name": "Shopping mall",
+		"voltage": "LV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 0.0175
+			}
+		]
+	},
+	"939403612": {
+		"name": "Shopping mall 1",
+		"voltage": "LV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 0.0175
+			}
+		]
+	},
+	"34635233": {
+		"name": "Shopping mall 2",
+		"voltage": "LV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 0.0175
+			}
+		]
+	},
+	"833770003": {
+		"name": "Shopping mall 3",
+		"voltage": "LV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 0.0175
+			}
+		]
+	},
+	"939751548": {
+		"name": "Shopping mall 4",
+		"voltage": "LV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 0.0175
+			}
+		]
+	},
+	"954420476": {
+		"name": "Hospital 8",
+		"voltage": "LV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 0.02
+			}
+		]
+	},
+	"936641212": {
+		"name": "Hospital 7",
+		"voltage": "LV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 0.02
+			}
+		]
+	},
+	"939411948": {
+		"name": "Hospital 6",
+		"voltage": "LV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 0.02
+			}
+		]
+	},
+	"2836058869": {
+		"name": "Hospital 5",
+		"voltage": "LV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 0.02
+			}
+		]
+	},
+	"938833836": {
+		"name": "Hospital 4",
+		"voltage": "LV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 0.02
+			}
+		]
+	},
+	"835732755": {
+		"name": "Hospital 2",
+		"voltage": "LV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 0.02
+			}
+		]
+	},
+	"956696828": {
+		"name": "Hospital 3",
+		"voltage": "LV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 0.02
+			}
+		]
+	},
+	"8538681": {
+		"name": "Hospital 1",
+		"voltage": "LV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 0.02
+			}
+		]
+	}
+}

@@ -1,0 +1,17 @@
+*.pyc
+html/
+latex/
+.vscode/
+smart_grid_table.egg-info/
+src.egg-info/
+pyvenv.cfg
+lib
+lib/
+lib64
+lib64/
+bin/
+build/
+include/
+share/
+export/
+venv/

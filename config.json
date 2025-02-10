@@ -1,0 +1,10 @@
+
+{
+    "base_topic": "SmartDemoTable2",
+    "local_setup": true,
+    "mqtt_config_name": "local",
+    "mqtt_config_folder": "configuration/MQTT/",
+    "static_scenario_folder": "scenarios/static/",
+    "dynamic_scenario_folder": "scenarios/dynamic/",
+    "restrictions_folder": "configuration/restrictions/"
+}

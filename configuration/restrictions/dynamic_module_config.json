@@ -1,0 +1,277 @@
+{
+	"type_restrictions": {
+		"name": "string",
+		"voltage": "list",
+		"generators": {
+			"type": "string",
+			"p_nom": "double",
+			"p_max_pu": "doublelist",
+			"p_min_pu": "double",
+			"p_nom_min": "double",
+			"p_nom_max": "double",
+			"p_nom_extendable": "list",
+			"marginal_cost": "int"
+		},
+
+
+		"storages": {
+			"type": "string",
+			"p_nom_min": "double",
+			"p_nom_max": "double",
+			"p_nom_extendable": "list",
+			"state_of_charge_initial": "double",
+			"marginal_cost": "int"
+		},
+
+		"transformers": {
+			"type": "list"
+		},
+
+		"loads": {
+			"type": "string",
+			"carrier": "list",
+			"p_set": "doublelist"
+		}
+	},
+
+	"range_restrictions": {
+		"name": null,
+		"voltage": ["HV", "MV", "LV"],
+		"generators": {
+			"type": null,
+			"p_nom": null,
+			"p_max_pu": 24,
+			"p_min_pu": null,
+			"p_nom_min": null,
+			"p_nom_max": null,
+			"p_nom_extendable": ["True", "False"],
+			"marginal_cost": null
+		},
+
+		"storages": {
+			"type": null,
+			"p_nom_min": null,
+			"p_nom_max": null,
+			"p_nom_extendable": ["True", "False"],
+			"state_of_charge_initial": null,
+			"marginal_cost": null
+		},
+
+		"transformers": {
+			"type": ["63 MVA 110/10 kV", "0.63 MVA 10/0.4 kV"]
+		},
+
+		"loads": {
+			"type": null,
+			"carrier": ["AC", "DC"],
+			"p_set": 24
+		}
+	},
+
+	"write_restrictions": {
+		"Beginner": {
+			"name": false,
+			"voltage": true,
+			"generators": {
+				"type": true,
+				"p_nom": false,
+				"p_max_pu": true,
+				"p_min_pu": true,
+				"p_nom_min": true,
+				"p_nom_max": false,
+				"p_nom_extendable": true,
+				"marginal_cost": false
+			},
+
+			"storages": {
+				"type": true,
+				"p_nom_min": true,
+				"p_nom_max": false,
+				"p_nom_extendable": true,
+				"state_of_charge_initial": false,
+				"marginal_cost": false
+			},
+
+			"transformers": {
+				"type": true
+			},
+
+			"loads": {
+				"type": true,
+				"carrier": true,
+				"p_set": false
+			}
+		},
+
+		"Advanced": {
+			"name": false,
+			"voltage": false,
+			"generators": {
+				"type": false,
+				"p_nom": false,
+				"p_max_pu": false,
+				"p_min_pu": false,
+				"p_nom_min": false,
+				"p_nom_max": false,
+				"p_nom_extendable": false,
+				"marginal_cost": false
+			},
+
+			"storages": {
+				"type": false,
+				"p_nom_min": false,
+				"p_nom_max": false,
+				"p_nom_extendable": false,
+				"state_of_charge_initial": false,
+				"marginal_cost": false
+			},
+
+			"transformers": {
+				"type": false
+			},
+
+			"loads": {
+				"type": false,
+				"carrier": false,
+				"p_set": false
+			}
+		}
+	},
+
+	"visibility_restrictions": {
+		"Beginner": {
+			"name": true,
+			"voltage": true,
+			"generators": {
+				"type": true,
+				"p_nom": false,
+				"p_max_pu": true,
+				"p_min_pu": true,
+				"p_nom_min": true,
+				"p_nom_max": false,
+				"p_nom_extendable": true,
+				"marginal_cost": false
+			},
+
+			"storages": {
+				"type": true,
+				"p_nom_min": false,
+				"p_nom_max": true,
+				"p_nom_extendable": false,
+				"state_of_charge_initial": true,
+				"marginal_cost": true
+			},
+
+			"transformers": {
+				"type": false
+			},
+
+			"loads": {
+				"type": true,
+				"carrier": true,
+				"p_set": true
+			}
+		},
+
+		"Advanced": {
+			"name": true,
+			"voltage": true,
+			"generators": {
+				"type": true,
+				"p_nom": true,
+				"p_max_pu": true,
+				"p_min_pu": true,
+				"p_nom_min": true,
+				"p_nom_max": true,
+				"p_nom_extendable": true,
+				"marginal_cost": true
+			},
+
+			"storages": {
+				"type": true,
+				"p_nom_min": true,
+				"p_nom_max": true,
+				"p_nom_extendable": true,
+				"state_of_charge_initial": true,
+				"marginal_cost": true
+			},
+
+			"transformers": {
+				"type": true
+			},
+
+			"loads": {
+				"type": true,
+				"carrier": true,
+				"p_set": true
+			}
+		}
+	},
+
+	"alternative_parameter_names": {
+		"Beginner": {
+			"name": "Name",
+			"voltage": "Voltage Level",
+			"generators": {
+				"type": "Component Type",
+				"p_nom": "Nominal Power",
+				"p_max_pu": "Max Power Per Unit",
+				"p_min_pu": "Min Power Per Unit",
+				"p_nom_min": "Minimal Power",
+				"p_nom_max": "Power",
+				"p_nom_extendable": "Nominal Power Extandable",
+				"marginal_cost": "Marginal Cost"
+			},
+
+			"storages": {
+				"type": "Component Type",
+				"p_nom_min": "Minimal Power",
+				"p_nom_max": "Power",
+				"p_nom_extendable": "Nominal Power Extandable",
+				"state_of_charge_initial": "State of Initial Charge",
+				"marginal_cost": "Marginal Cost"
+			},
+
+			"transformers": {
+				"type": "Transformer Type"
+			},
+
+			"loads": {
+				"type": "Component Type",
+				"carrier": "Carrier",
+				"p_set": "Power"
+			}
+		},
+
+		"Advanced": {
+			"name": null,
+			"voltage": null,
+			"generators": {
+				"type": null,
+				"p_nom_min": null,
+				"p_nom_max": null,
+				"p_nom_extendable": null,
+				"marginal_cost": null
+			},
+
+			"storages": {
+				"type": null,
+				"p_nom_min": null,
+				"p_nom_max": null,
+				"p_nom_extendable": null,
+				"state_of_charge_initial": null,
+				"marginal_cost": null
+			},
+
+			"transformers": {
+				"type": null
+			},
+
+			"loads": {
+				"type": null,
+				"carrier": null,
+				"p_set": null
+			}
+		}
+	}
+}

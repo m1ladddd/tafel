@@ -1,0 +1,10 @@
+
+{
+    "name": "hivemq",
+    "description": "HiveMQ MQTT broker",
+    "address": "broker.hivemq.com",
+    "port": 1883,
+    "authentication": false,
+    "user": "",
+    "password": ""
+}

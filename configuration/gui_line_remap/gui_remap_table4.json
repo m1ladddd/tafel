@@ -1,0 +1,69 @@
+
+{
+    "remap_list": [
+        {
+            "origin_line": 0,
+            "destination_lines": [8]
+        },
+        {
+            "origin_line": 1,
+            "destination_lines": [7]
+        },
+        {
+            "origin_line": 2,
+            "destination_lines": [6]
+        },
+        {
+            "origin_line": 3,
+            "destination_lines": [5]
+        },
+        {
+            "origin_line": 4,
+            "destination_lines": [4]
+        },
+        {
+            "origin_line": 5,
+            "destination_lines": [3]
+        },
+        {
+            "origin_line": 6,
+            "destination_lines": [2]
+        },
+        {
+            "origin_line": 7,
+            "destination_lines": [1]
+        },
+        {
+            "origin_line": 8,
+            "destination_lines": [0]
+        },
+        {
+            "origin_line": 9,
+            "destination_lines": [15]
+        },
+        {
+            "origin_line": 10,
+            "destination_lines": [14]
+        },
+        {
+            "origin_line": 11,
+            "destination_lines": [13]
+        },
+        {
+            "origin_line": 12,
+            "destination_lines": [12]
+        },
+        {
+            "origin_line": 13,
+            "destination_lines": [11]
+        },
+        {
+            "origin_line": 14,
+            "destination_lines": [10]
+        },
+        {
+            "origin_line": 15,
+            "destination_lines": [9]
+        }
+    ]
+}

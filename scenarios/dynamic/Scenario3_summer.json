@@ -1,0 +1,528 @@
+{    
+	"name": "Summerday",
+	"simulation_type": "Dynamic",
+	"begin_date":"2021-07-01 00:00",
+	"end_date":"2021-07-01 23:00",
+	"frequency":"H",
+	"time_per_snapshot":5,
+
+	"1071771887": {
+		"name": "Coal powerplant",
+		"voltage": "HV",
+		"generators": [
+			{
+				"type": "Generator",
+				"p_nom": 60,
+				"p_nom_extendable": "False",
+				"marginal_cost": 90
+			}
+		]
+	},
+	"1842809804": {
+		"name": "In/export",
+		"voltage": "HV",
+		"generators": [
+			{
+				"type": "Generator",
+				"p_nom": 9999999999999999999,
+				"p_nom_extendable": "False",
+				"marginal_cost": 120
+			}
+		]
+	},
+	"1071966141": {
+		"name": "Gas powerplant",
+		"voltage": "HV",
+		"generators": [
+			{
+				"type": "Generator",
+				"p_nom": 65,
+				"p_max_pu":0.8,
+				"p_nom_extendable": "False",
+				"marginal_cost": 95
+			}
+		]
+	},
+	"3113052135": {
+		"name": "Huisman Half Roof",
+		"voltage": "LV,MV",
+		"generators":[
+			{
+			"type":"Generator",
+			"p_nom":7.44
+			}
+		]
+	},
+	"1933784839": {
+		"name": "Huisman Green",
+		"voltage": "LV,MV",
+		"generators":[
+			{
+			"type":"Generator",
+			"p_nom":7.44
+			}
+		]
+	},
+	"699096041": {
+		"name": "Huisman Full Roof",
+		"voltage": "LV,MV",
+		"generators":[
+			{
+			"type":"Generator",
+			"p_nom":31,
+			"p_min_pu":1
+			}
+		]
+	},
+	"2741240903": {
+		"name": "Huisman",
+		"voltage": "LV,MV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 1.19
+			}
+		]
+	},
+	"597376903": {
+		"name": "Office building",
+		"voltage": "MV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 0.12
+			}
+		]
+	},
+	"1857348684": {
+		"name": "Nuclear p.p.",
+		"voltage": "HV",
+		"generators": [
+			{
+				"type": "Generator",
+				"p_nom": 55,
+				"p_nom_extendable": "False",
+				"marginal_cost": 95
+			}
+		]
+	},
+	"1071766506": {
+		"name": "Solar farm small 1",
+		"voltage": "MV",
+		"generators": [
+			{
+				"type": "Generator",
+				"p_nom": 5.037905702,
+				"p_nom_max": 5.037905702,
+				"p_max_pu": "scenarios/dynamic/Summer/Power_PV_Summer.csv",
+				"p_min_pu": 0,
+				"p_nom_extendable": "False",
+				"marginal_cost": 87
+			}
+		]
+	},
+	"1071741103": {
+		"name": "Wind and solar",
+		"voltage": "LV",
+		"generators": [
+			{
+				"type": "Generator",
+				"p_nom": 6.93,
+				"p_nom_extendable": "False",
+				"marginal_cost": 59
+			}
+		]
+	},
+	"1071972725": {
+		"name": "StorageMV1",
+		"voltage": "MV",
+		"storages": [
+			{
+				"type": "Storage",
+				"p_nom": 3,
+				"p_nom_extendable": "False",
+				"state_of_charge_initial": 1,
+				"marginal_cost": 40
+			}
+		]
+	},
+	"1072039450": {
+		"name": "StorageLV1",
+		"voltage": "LV",
+		"storages": [
+			{
+				"type": "Storage",
+				"p_nom": 1,
+				"p_nom_extendable": "False",
+				"state_of_charge_initial": 0.0,
+				"marginal_cost": 40
+			}
+		]
+	},
+	"1071746625": {
+		"name": "HV-MV TF1",
+		"voltage": "HV",
+		"transformer": [
+			{
+				"type": "63 MVA 110/10 kV"
+			}
+		]
+	},
+	"1071763866": {
+		"name": "HV-MV TF2",
+		"voltage": "HV",
+		"transformer": [
+			{
+				"type": "63 MVA 110/10 kV"
+			}
+		]
+	},
+	"1071746557": {
+		"name": "MV-LV TF 1",
+		"voltage": "LV",
+		"transformer": [
+			{
+				"type": "0.63 MVA 10/0.4 kV"
+			}
+		]
+	},
+	"1072051579": {
+		"name": "MV-LV TF 2",
+		"voltage": "LV",
+		"transformer": [
+			{
+				"type": "0.63 MVA 10/0.4 kV"
+			}
+		]
+	},
+	"1072040213": {
+		"name": "MV-LV TF 3",
+		"voltage": "LV",
+		"transformer": [
+			{
+				"type": "0.63 MVA 10/0.4 kV"
+			}
+		]
+	},
+	"1072066624": {
+		"name": "Processing factory",
+		"voltage": "MV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 22
+			}
+		]
+	},
+	"2041806607": {
+		"name": "Processing factory",
+		"voltage": "MV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 22
+			}
+		]
+	},
+	"1071780135": {
+		"name": "Car charging station 1",
+		"voltage": "MV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 0.12
+			}
+		]
+	},
+	"1072051546": {
+		"name": "Chemical factory",
+		"voltage": "MV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 10
+			}
+		]
+	},
+	"1071991074": {
+		"name": "Hydro station",
+		"voltage": "MV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 0.096
+			}
+		]
+	},
+	"1071729488": {
+		"name": "HAN",
+		"voltage": "MV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 0.4
+			}
+		]
+	},
+	"1071769060": {
+		"name": "Car charging station 2",
+		"voltage": "MV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 0.08
+			}
+		]
+	},
+	"1071778332":{
+		"name":"testphoto",
+		"voltage":"LV",
+		"photovoltaic":[
+			{"type":"generator",
+			 "p_nom":20,
+			 "surface_azimuth":90,
+			 "enable":true
+			}
+		]
+	},
+	"1071985354": {
+		"name": "Terrace houses 1",
+		"voltage": "LV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": "scenarios/dynamic/Summer/Power_TerraceHouse_140_Summer.csv"
+			}
+		]
+	},
+	"1072063229": {
+		"name": "Terrace houses 2",
+		"voltage": "LV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": "scenarios/dynamic/Summer/Power_TerraceHouse_140_Summer.csv"
+			}
+		]
+	},
+	"1072056604": {
+		"name": "Terrace houses 3",
+		"voltage": "LV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": "scenarios/dynamic/Summer/Power_TerraceHouse_140_Summer.csv"
+			}
+		]
+	},
+	"699168295": {
+		"name": "Terrace houses 4",
+		"voltage": "LV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": "scenarios/dynamic/Summer/Power_TerraceHouse_140_Summer.csv"
+			}
+		]
+	},
+	"2305939010": {
+		"name": "Terrace houses 5",
+		"voltage": "LV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": "scenarios/dynamic/Summer/Power_TerraceHouse_140_Summer.csv"
+			}
+		]
+	},
+	"2836102489": {
+		"name": "Terrace houses 6",
+		"voltage": "LV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": "scenarios/dynamic/Summer/Power_TerraceHouse_140_Summer.csv"
+			}
+		]
+	},
+	"1071986763": {
+		"name": "House 1",
+		"voltage": "LV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": "scenarios/dynamic/Summer/Power_Household_80_Summer.csv"
+			}
+		]
+	},
+	"1072063101": {
+		"name": "House 2",
+		"voltage": "LV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": "scenarios/dynamic/Summer/Power_Household_80_Summer.csv"
+			}
+		]
+	},
+	"2298616020": {
+		"name": "House 3",
+		"voltage": "LV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": "scenarios/dynamic/Summer/Power_Household_80_Summer.csv"
+			}
+		]
+	},
+	"1071733508": {
+		"name": "House 4",
+		"voltage": "LV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": "scenarios/dynamic/Summer/Power_Household_80_Summer.csv"
+			}
+		]
+	},
+	"3914547211": {
+		"name": "House 5",
+		"voltage": "LV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": "scenarios/dynamic/Summer/Power_Household_80_Summer.csv"
+			}
+		]
+	},
+	"1071773816": {
+		"name": "Storage house 1",
+		"voltage": "LV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": "scenarios/dynamic/Summer/Power_StorageHouse_10_Summer.csv"
+			}
+		]
+	},
+	"1071780377": {
+		"name": "Storage house 2",
+		"voltage": "LV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": "scenarios/dynamic/Summer/Power_StorageHouse_10_Summer.csv"
+			}
+		]
+	},
+	"1071770985": {
+		"name": "Appartment 1",
+		"voltage": "LV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": "scenarios/dynamic/Summer/Power_Appartment_150_Summer.csv"
+			}
+		]
+	},
+	"7304921": {
+		"name": "Appartment 2",
+		"voltage": "LV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": "scenarios/dynamic/Summer/Power_Appartment_150_Summer.csv"
+			}
+		]
+	},
+	"593072732": {
+		"name": "Appartment 3",
+		"voltage": "LV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": "scenarios/dynamic/Summer/Power_Appartment_150_Summer.csv"
+			}
+		]
+	},
+	"1071753108": {
+		"name": "Appartment 4",
+		"voltage": "LV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": "scenarios/dynamic/Summer/Power_Appartment_150_Summer.csv"
+			}
+		]
+	},
+	"2836099420": {
+		"name": "Appartment 5",
+		"voltage": "LV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": "scenarios/dynamic/Summer/Power_Appartment_150_Summer.csv"
+			}
+		]
+	},
+	"1840834860": {
+		"name": "Appartment 6",
+		"voltage": "LV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": "scenarios/dynamic/Summer/Power_Appartment_150_Summer.csv"
+			}
+		]
+	},
+	"597999943": {
+		"name": "Shopping mall",
+		"voltage": "LV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": 0.07
+			}
+		]
+	},
+	"8538681": {
+		"name": "Hospital 1",
+		"voltage": "LV",
+		"loads": [
+			{
+				"type": "Load",
+				"carrier": "AC",
+				"p_set": "scenarios/dynamic/Summer/Power_Hosptial_2_Summer.csv"
+			}
+		]
+	}
+}
