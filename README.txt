@@ -59,3 +59,4 @@ To start the SmartGridTable-2022 program:
 --------------------
 SmartGridTable-2022 has multiple interaction commands:
 type help for a full list of commands
+# Pandapower CI/CD test # Simpele wijziging
