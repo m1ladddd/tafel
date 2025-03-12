@@ -5,3 +5,5 @@ pvlib==0.9.5 #aangepast
 paho-mqtt==1.6.1
 pypsa==0.25.2
 pvfactors==1.5.2
+pandapower
+pandapower
