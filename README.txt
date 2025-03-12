@@ -61,3 +61,4 @@ SmartGridTable-2022 has multiple interaction commands:
 type help for a full list of commands
 # Pandapower CI/CD test # Simpele wijziging
 Test GitHub Actions
+# Testing GitHub Actions pipeline
