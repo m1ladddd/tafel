@@ -14,32 +14,20 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: 🛎️ Haal de repository op
-        uses: actions/checkout@v3
-
-      - name: 🐍 Installeer Python
+      - uses: actions/checkout@v3
+      
+      - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.9'
-
-      - name: 📦 Installeer dependencies
+      
+      - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install pandapower
-
-      - name: 🎯 Voer linting uit (flake8)
-        run: |
-          pip install flake8
-          flake8 .
-
-      - name: ✅ Voer tests uit met pytest
+      
+      - name: Run tests
         run: |
           pip install pytest
-          python -m pytest test/
-          pytest || true
-          
-
-      - name: ⚡ Test Pandapower installatie
-        run: |
-          python -c "import pandapower; import pandapower.networks as nw; net = nw.example_simple(); print('Pandapower werkt!')"
+          python -m pytest

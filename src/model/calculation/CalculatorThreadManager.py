@@ -8,15 +8,24 @@
 # @section author_Model Author(s)
 # - Created by Jop Merz on 31/05/2023.
 # - Modified by Jop Merz on 11/10/2023.
+# - Modified by Milad on 31-03-2025
 ##
 
 # Internal imports
 from src.model.Model import Model
 from src.model.calculation.CalculatorThreadInterface import CalculatorThreadInterface
+
+# PyPSA calculator imports
 from src.model.calculation.pypsa.PyPSACalculatorOptimize import PyPSACalculatorOptimize
 from src.model.calculation.pypsa.PyPSACalculatorLOPF import PyPSACalculatorLOPF
 from src.model.calculation.pypsa.PyPSACalculatorLPF import PyPSACalculatorLPF
 from src.model.calculation.pypsa.PyPSACalculatorPF import PyPSACalculatorPF
+
+# Pandapower calculator imports
+from src.model.calculation.pandapower.PandapowerCalculatorOptimize import PandapowerCalculatorOptimize
+from src.model.calculation.pandapower.PandapowerCalculatorLOPF import PandapowerCalculatorLOPF
+from src.model.calculation.pandapower.PandapowerCalculatorLPF import PandapowerCalculatorLPF
+from src.model.calculation.pandapower.PandapowerCalculatorPF import PandapowerCalculatorPF
 
 # External imports
 from time import perf_counter
@@ -87,6 +96,9 @@ class CalculatorThreadManager:
         ## A list of all snapshots (for dynamic calculations)
         self.__snapshots: list[int] = [0]
 
+        ## Use Pandapower (True) or PyPSA (False)
+        self.__use_pandapower: bool = True
+
         # Create and init 5 worker threads
         for i in range(5):
             thread: ThreadData = ThreadData()
@@ -105,14 +117,26 @@ class CalculatorThreadManager:
         @param method str Input string (lopf, lpf or pf).
         @return instance with a CalculatorThreadInterface interface
         """
-        if (method == "optimize"):
-            return PyPSACalculatorOptimize()
-        if (method == "lopf"):
-            return PyPSACalculatorLOPF()
-        if (method == "lpf"):
-            return PyPSACalculatorLPF()
-        if (method == "pf"):
-            return PyPSACalculatorPF()
+        if self.__use_pandapower:
+            # Pandapower implementations
+            if (method == "optimize"):
+                return PandapowerCalculatorOptimize()
+            if (method == "lopf"):
+                return PandapowerCalculatorLOPF()
+            if (method == "lpf"):
+                return PandapowerCalculatorLPF()
+            if (method == "pf"):
+                return PandapowerCalculatorPF()
+        else:
+            # PyPSA implementations
+            if (method == "optimize"):
+                return PyPSACalculatorOptimize()
+            if (method == "lopf"):
+                return PyPSACalculatorLOPF()
+            if (method == "lpf"):
+                return PyPSACalculatorLPF()
+            if (method == "pf"):
+                return PyPSACalculatorPF()
         return None
 
 
@@ -127,6 +151,18 @@ class CalculatorThreadManager:
                 thread_data.calculation_instance = self.__create_calculation_instance(method)
 
         self.__calculation_method = method
+
+    
+    def set_calculation_engine(self, use_pandapower: bool) -> None:
+        """
+        Set the calculation engine to use (Pandapower or PyPSA).
+        @param use_pandapower bool True to use Pandapower, False to use PyPSA
+        """
+        if self.__use_pandapower != use_pandapower:
+            self.__use_pandapower = use_pandapower
+            # Update all worker threads with the new calculation engine
+            for thread_data in self.__worker_threads:
+                thread_data.calculation_instance = self.__create_calculation_instance(self.__calculation_method)
 
 
     def set_snapshots(self, snapshots: list[int]):
@@ -181,10 +217,12 @@ class CalculatorThreadManager:
         elapsed_time = perf_counter() - start_time
 
         # Print results
+        engine_name = "Pandapower" if self.__use_pandapower else "PyPSA"
         for i in range(model_count):
             thread = self.__worker_threads[i]
             total_time: float = thread.build_time + thread.calculation_time
             print(f"Model: {thread.model_id+1}")
+            print(f"    Engine: {engine_name}")
             print(f"    Method: {self.__calculation_method}")
             print(f"    Status: [{thread.status}, {thread.status_extended}]")
             print(f"    Build time: {thread.build_time:.3f} s")
