@@ -3,7 +3,7 @@ pandas==2.0.3
 matplotlib==3.8.1
 pvlib==0.9.5
 paho-mqtt==1.6.1
-pandapower
+pandapower==2.13.1
 pvfactors==1.5.2
 
 # Development dependencies
