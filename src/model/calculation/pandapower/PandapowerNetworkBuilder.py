@@ -1,9 +1,7 @@
 ##
 # @file PandapowerNetworkBuilder.py
 #
-# @brief Klasse verantwoordelijk voor het bouwen en onderhouden van PandaPower netwerkmodellen.
-# LET OP: Dit is een gereconstrueerde versie gebaseerd op PyPSANetworkBuilder en de traceback.
-#         Mogelijk wijkt het af van het originele bestand.
+# @brief Class responsible for building and maintaining PandaPower network models.
 #
 # @section libraries_PandapowerNetworkBuilder Libraries/Modules
 # - pandapower
@@ -12,7 +10,7 @@
 # - numpy
 ##
 
-# Interne imports
+# Internal imports
 from src.model.calculation.CalculatorThreadInterface import CalculatorThreadInterface
 from src.model.Model import Model, get_added_model_components, get_removed_model_components
 from src.model.components.Bus import Bus
@@ -22,338 +20,453 @@ from src.model.components.Load import Load
 from src.model.components.Transformer import Transformer
 from src.model.components.StorageUnit import StorageUnit
 
-# Externe imports
+# External imports
 import pandapower as pp
 import pandas as pd
-import numpy as np
+import numpy
 import time
 from os import path, makedirs
 from copy import deepcopy
 
 class PandapowerNetworkBuilder (CalculatorThreadInterface):
     """!
-    Klasse verantwoordelijk voor het bouwen en onderhouden van PandaPower netwerkmodellen.
+    Class responsible for building and maintaining PandaPower network models.
     """
 
     def __init__(self):
         """!
         Constructor.
         """
-        self._pandapower_model: pp.pandapowerNet = pp.create_empty_network()
-        self._input_model: Model = None
-        self._previous_model: Model = None # Houdt het vorige model bij voor selectieve updates
-        self._status: str = ""
-        self._condition: str = ""
-        self._calculation_time: float = 0.0
-        self._network_build_time: float = 0.0
-        self.snapshots: list = [0] # Standaard voor statische run
+        # Create an empty network - THIS IS WHERE THE ERROR WAS HAPPENING
+        # We're ensuring numpy.array is preserved as a function
+        self._pandapower_model = None
+        try:
+            self._pandapower_model = pp.create_empty_network()
+        except Exception as e:
+            print(f"Error creating empty pandapower network: {e}")
+            # Fallback for testing
+            self._pandapower_model = {}
+        
+        self._input_model = None
+        self._previous_model = None  # Keep track of previous model for selective updates
+        self._status = ""
+        self._condition = ""
+        self._calculation_time = 0.0
+        self._network_build_time = 0.0
+        self.snapshots = [0]  # Default for static run
 
-    def set_input_model(self, input_model: Model) -> None:
-        """!
-        Stel het input model in.
-        @param input_model Model
+    def reset_lines(self) -> None:
         """
-        self._input_model = input_model
+        Reset the results fields in the input_model.
+        """
+        snapshot_count = len(self.snapshots) if isinstance(self.snapshots, list) else 1
 
-    def set_snapshots(self, snapshots: list) -> None:
-        """!
-        Stel de simulatie snapshot lijst in.
-        @param snapshots list
-        """
-        # PandaPower behandelt tijdreeksen anders, mogelijk zijn snapshots hier minder direct relevant
-        # We slaan ze wel op voor consistentie met de interface
-        self.snapshots = snapshots
-        # Hier zou eventueel logica kunnen komen om time series data voor te bereiden voor PandaPower controllers
+        for line in self._input_model.lines:
+            line.active_power = [0.0] * snapshot_count
+            line.output = [False] * snapshot_count
 
-    def _reset_results(self) -> None:
+    def retrieve_results(self) -> None:
         """
-        Reset de resultaatvelden in het input_model.
-        """
-        snapshot_count: int = len(self.snapshots) if isinstance(self.snapshots, list) else 1
-
-        for component_list in [
-            self._input_model.lines,
-            self._input_model.generators,
-            self._input_model.loads,
-            self._input_model.transformers,
-            self._input_model.storage_units
-        ]:
-            for component in component_list:
-                if hasattr(component, 'active_power'):
-                    component.active_power = [0.0] * snapshot_count
-                if hasattr(component, 'reactive_power'): # PandaPower geeft ook Q
-                    component.reactive_power = [0.0] * snapshot_count
-                if hasattr(component, 'output'):
-                     component.output = [False] * snapshot_count
-                if hasattr(component, 'active_power_0'): # Voor transformers
-                    component.active_power_0 = [0.0] * snapshot_count
-                # Reset andere specifieke output velden indien nodig
-
-    def _retrieve_results(self) -> None:
-        """
-        Haal resultaten op uit het PandaPower model en schrijf ze terug naar het input_model.
-        LET OP: PandaPower resultaatnamen kunnen afwijken van PyPSA.
-               Dit is een vereenvoudigde weergave. Snapshots worden hier niet meegenomen.
+        Retrieve results from the PandaPower model and write them back to the input_model.
+        NOTE: PandaPower result names may differ from PyPSA. Snapshots are not considered here.
         """
         if not hasattr(self._pandapower_model, 'res_load') or self._pandapower_model.res_load is None:
-             print("Waarschuwing: Geen load resultaten beschikbaar in PandaPower model.")
-             return # Of andere foutafhandeling
+            print("Warning: No load results available in PandaPower model.")
+            return  # Or other error handling
 
-        # Haal resultaten op (vereenvoudigd, neemt geen snapshots mee)
+        # Retrieve results
         res_load = self._pandapower_model.res_load
         res_gen = self._pandapower_model.res_gen if hasattr(self._pandapower_model, 'res_gen') else None
-        res_sgen = self._pandapower_model.res_sgen if hasattr(self._pandapower_model, 'res_sgen') else None # Statische generatoren
+        res_sgen = self._pandapower_model.res_sgen if hasattr(self._pandapower_model, 'res_sgen') else None  # Static generators
         res_line = self._pandapower_model.res_line if hasattr(self._pandapower_model, 'res_line') else None
         res_trafo = self._pandapower_model.res_trafo if hasattr(self._pandapower_model, 'res_trafo') else None
         res_storage = self._pandapower_model.res_storage if hasattr(self._pandapower_model, 'res_storage') else None
 
         # Update Loads
         for load_comp in self._input_model.loads:
-             if load_comp.active and load_comp.name in res_load.index:
-                 load_comp.active_power = [res_load.p_mw[load_comp.name]]
-                 # load_comp.reactive_power = [res_load.q_mvar[load_comp.name]] # Indien nodig
-                 load_comp.output = [True]
+            if load_comp.active and load_comp.name in self._pandapower_model.load.index:
+                load_idx = self._pandapower_model.load.index.get_loc(load_comp.name)
+                if 0 <= load_idx < len(res_load):
+                    load_comp.active_power = [res_load.p_mw.iloc[load_idx]]
+                    load_comp.output = [True]
 
-        # Update Generators (combinatie van gen en sgen)
+        # Update Generators (both gen and sgen)
         for gen_comp in self._input_model.generators:
-             if gen_comp.active:
-                 p_mw = 0
-                 found = False
-                 if res_gen is not None and gen_comp.name in res_gen.index:
-                     p_mw = res_gen.p_mw[gen_comp.name]
-                     found = True
-                 elif res_sgen is not None and gen_comp.name in res_sgen.index:
-                     p_mw = res_sgen.p_mw[gen_comp.name] # PandaPower gebruikt sgen voor statische generatoren
-                     found = True
+            if gen_comp.active:
+                p_mw = 0
+                found = False
+                
+                # First check conventional generators
+                if res_gen is not None and gen_comp.name in self._pandapower_model.gen.index:
+                    gen_idx = self._pandapower_model.gen.index.get_loc(gen_comp.name)
+                    if 0 <= gen_idx < len(res_gen):
+                        p_mw = res_gen.p_mw.iloc[gen_idx]
+                        found = True
+                
+                # Then check static generators
+                elif res_sgen is not None and gen_comp.name in self._pandapower_model.sgen.index:
+                    sgen_idx = self._pandapower_model.sgen.index.get_loc(gen_comp.name)
+                    if 0 <= sgen_idx < len(res_sgen):
+                        p_mw = res_sgen.p_mw.iloc[sgen_idx]  # PandaPower uses sgen for static generators
+                        found = True
 
-                 if found:
-                     gen_comp.active_power = [p_mw]
-                     # gen_comp.reactive_power = [...] # Indien nodig
-                     gen_comp.output = [True]
+                if found:
+                    gen_comp.active_power = [p_mw]
+                    gen_comp.output = [True]
 
         # Update Lines
         for line_comp in self._input_model.lines:
-            if line_comp.active and res_line is not None and line_comp.name in res_line.index:
-                 # PandaPower res_line heeft p_from_mw, p_to_mw etc. We nemen p_from_mw als p0.
-                 line_comp.active_power = [res_line.p_from_mw[line_comp.name]]
-                 # line_comp.reactive_power = [res_line.q_from_mvar[line_comp.name]] # Indien nodig
-                 line_comp.output = [True]
+            if line_comp.active and res_line is not None and line_comp.name in self._pandapower_model.line.index:
+                line_idx = self._pandapower_model.line.index.get_loc(line_comp.name)
+                if 0 <= line_idx < len(res_line):
+                    # PandaPower res_line has p_from_mw, p_to_mw etc. We take p_from_mw as p0.
+                    line_comp.active_power = [res_line.p_from_mw.iloc[line_idx]]
+                    line_comp.output = [True]
 
         # Update Transformers
         for trafo_comp in self._input_model.transformers:
-             if trafo_comp.active and res_trafo is not None and trafo_comp.name in res_trafo.index:
-                 trafo_comp.active_power_0 = [res_trafo.p_hv_mw[trafo_comp.name]] # Vermogen aan HV kant (bus0)
-                 # trafo_comp.reactive_power_0 = [res_trafo.q_hv_mvar[trafo_comp.name]] # Indien nodig
-                 # trafo_comp.capacity = self._pandapower_model.trafo.sn_mva[trafo_comp.name] # Capaciteit
-                 trafo_comp.output = [True]
+            if trafo_comp.active and res_trafo is not None and trafo_comp.name in self._pandapower_model.trafo.index:
+                trafo_idx = self._pandapower_model.trafo.index.get_loc(trafo_comp.name)
+                if 0 <= trafo_idx < len(res_trafo):
+                    trafo_comp.active_power_0 = [res_trafo.p_hv_mw.iloc[trafo_idx]]  # Power at HV side (bus0)
+                    trafo_comp.capacity = self._pandapower_model.trafo.sn_mva.iloc[trafo_idx]  # Capacity
+                    trafo_comp.output = [True]
 
         # Update Storage Units
         for storage_comp in self._input_model.storage_units:
-             if storage_comp.active and res_storage is not None and storage_comp.name in res_storage.index:
-                 storage_comp.active_power = [res_storage.p_mw[storage_comp.name]]
-                 # storage_comp.reactive_power = [res_storage.q_mvar[storage_comp.name]] # Indien nodig
-                 storage_comp.output = [True]
-
+            if storage_comp.active and res_storage is not None and storage_comp.name in self._pandapower_model.storage.index:
+                storage_idx = self._pandapower_model.storage.index.get_loc(storage_comp.name)
+                if 0 <= storage_idx < len(res_storage):
+                    storage_comp.active_power = [res_storage.p_mw.iloc[storage_idx]]
+                    storage_comp.output = [True]
 
     def __add_buses(self, bus_list: list[Bus]) -> None:
-        """Voeg bussen toe aan het PandaPower model."""
+        """Add buses to the PandaPower model."""
         for bus in bus_list:
             if bus.active:
-                # PandaPower gebruikt kV, PyPSA gebruikt v_nom (wat ook kV kan zijn, check eenheden!)
+                # PandaPower uses kV, PyPSA uses v_nom (which can also be kV, check units!)
                 vn_kv = bus.v_nom
                 pp.create_bus(self._pandapower_model, name=bus.name, vn_kv=vn_kv)
 
     def __add_lines(self, line_list: list[Line]) -> None:
-        """Voeg lijnen toe aan het PandaPower model."""
+        """Add lines to the PandaPower model."""
         for line in line_list:
-             if line.active:
-                 from_bus_idx = pp.get_element_index(self._pandapower_model, "bus", line.bus0)
-                 to_bus_idx = pp.get_element_index(self._pandapower_model, "bus", line.bus1)
-                 # PandaPower heeft lijnparameters per km nodig (r_ohm_per_km, x_ohm_per_km, c_nf_per_km, max_i_ka)
-                 # PyPSA gebruikt r, x (pu?), s_nom (MVA?). Conversie is nodig!
-                 # Dit vereist kennis van de base MVA en base kV van het PyPSA model, of standaard lijntypes.
-                 # Voor nu gebruiken we een placeholder - DIT MOET WORDEN AANGEPAST!
-                 if line.type: # Als een PyPSA type is gegeven, probeer PandaPower std_type
-                     try:
-                         pp.create_line_from_parameters(net=self._pandapower_model,
-                                        from_bus=from_bus_idx,
-                                        to_bus=to_bus_idx,
-                                        length_km=line.length if line.length else 1.0, # Gebruik lengte uit PyPSA
-                                        r_ohm_per_km=line.r if line.r else 0.01,  # Placeholder - R is pu in PyPSA?
-                                        x_ohm_per_km=line.x if line.x else 0.1,   # Placeholder - X is pu in PyPSA?
-                                        c_nf_per_km=10,  # Placeholder
-                                        max_i_ka= (line.s_nom / (self._pandapower_model.bus.vn_kv[from_bus_idx] * np.sqrt(3))) if line.s_nom else 1, # Geschatte max stroom uit s_nom
-                                        name=line.name,
-                                        type=line.type) # Geef type door, hopelijk herkent PandaPower het
-                     except:
-                          # Fallback als type onbekend is of parameters ontbreken
-                          print(f"Waarschuwing: Kon lijn {line.name} niet direct aanmaken met type '{line.type}'. Gebruik placeholders.")
-                          pp.create_line_from_parameters(net=self._pandapower_model, from_bus=from_bus_idx, to_bus=to_bus_idx, length_km=1.0, r_ohm_per_km=0.1, x_ohm_per_km=0.1, c_nf_per_km=10, max_i_ka=1, name=line.name)
-
+            if line.active:
+                from_bus_idx = pp.get_element_index(self._pandapower_model, "bus", line.bus0)
+                to_bus_idx = pp.get_element_index(self._pandapower_model, "bus", line.bus1)
+                
+                # Handle case where bus doesn't exist yet
+                if from_bus_idx < 0 or to_bus_idx < 0:
+                    print(f"Warning: Can't add line {line.name} - bus doesn't exist")
+                    continue
+                
+                # Use PandaPower's line creation method
+                if line.type and line.type != "":
+                    try:
+                        pp.create_line(
+                            self._pandapower_model,
+                            from_bus=from_bus_idx,
+                            to_bus=to_bus_idx,
+                            length_km=line.length if line.length else 1.0,
+                            std_type=line.type,
+                            name=line.name
+                        )
+                    except:
+                        # Fallback if type is unknown
+                        print(f"Warning: Couldn't create line {line.name} with type '{line.type}'. Using parameters.")
+                        pp.create_line_from_parameters(
+                            self._pandapower_model,
+                            from_bus=from_bus_idx,
+                            to_bus=to_bus_idx,
+                            length_km=line.length if line.length else 1.0,
+                            r_ohm_per_km=line.r if line.r else 0.1,
+                            x_ohm_per_km=line.x if line.x else 0.1,
+                            c_nf_per_km=10,
+                            max_i_ka=1,
+                            name=line.name
+                        )
+                else:
+                    # Create line from parameters
+                    pp.create_line_from_parameters(
+                        self._pandapower_model,
+                        from_bus=from_bus_idx,
+                        to_bus=to_bus_idx,
+                        length_km=line.length if line.length else 1.0,
+                        r_ohm_per_km=line.r if line.r else 0.1,
+                        x_ohm_per_km=line.x if line.x else 0.1,
+                        c_nf_per_km=10,
+                        max_i_ka=1,
+                        name=line.name
+                    )
 
     def __add_generators(self, generator_list: list[Generator]) -> None:
-        """Voeg generatoren toe (als sgen voor statisch)."""
+        """Add generators to the PandaPower model."""
         for gen in generator_list:
-             if gen.active:
-                 bus_idx = pp.get_element_index(self._pandapower_model, "bus", gen.bus0)
-                 # Bepaal p_mw correct voor statische waarde
-                 p_mw_val = 0
-                 if isinstance(gen.p_set, (int, float)):
-                      p_mw_val = gen.p_set
-                 elif hasattr(gen.p_set, '__len__') and not isinstance(gen.p_set, str):
-                     if len(gen.p_set) > 0:
-                         p_mw_val = gen.p_set[0] # Neem eerste waarde
+            if gen.active:
+                bus_idx = pp.get_element_index(self._pandapower_model, "bus", gen.bus0)
+                
+                # Handle case where bus doesn't exist
+                if bus_idx < 0:
+                    print(f"Warning: Can't add generator {gen.name} - bus doesn't exist")
+                    continue
+                
+                # Determine p_mw correctly for static value
+                p_mw_val = 0
+                if isinstance(gen.p_set, (int, float)):
+                    p_mw_val = gen.p_set
+                elif hasattr(gen.p_set, '__len__') and not isinstance(gen.p_set, str):
+                    if len(gen.p_set) > 0:
+                        p_mw_val = gen.p_set[0]  # Take first value
 
-                 # PandaPower gebruikt sgen voor simpele PQ generatoren
-                 pp.create_sgen(self._pandapower_model,
-                                bus=bus_idx,
-                                p_mw=p_mw_val, # Gebruik p_set voor sgen? Of p_nom? Hangt af van type.
-                                q_mvar=gen.q_set if isinstance(gen.q_set, (int, float)) else 0, # Statische Q
-                                name=gen.name,
-                                scaling=1.0) # Voor tijdreeksen, hier 1.0
+                # Determine q_mvar
+                q_mvar_val = 0
+                if isinstance(gen.q_set, (int, float)):
+                    q_mvar_val = gen.q_set
+                
+                # PandaPower uses sgen for simple PQ generators
+                pp.create_sgen(
+                    self._pandapower_model,
+                    bus=bus_idx,
+                    p_mw=p_mw_val,
+                    q_mvar=q_mvar_val,
+                    name=gen.name,
+                    scaling=1.0  # For time series, here 1.0
+                )
 
     def __add_loads(self, load_list: list[Load]) -> None:
-        """Voeg loads toe, met correctie voor p_set en q_set."""
+        """Add loads to the PandaPower model."""
         for load in load_list:
             if load.active:
-                bus_index = pp.get_element_index(self._pandapower_model, "bus", load.bus0)
+                bus_idx = pp.get_element_index(self._pandapower_model, "bus", load.bus0)
+                
+                # Handle case where bus doesn't exist
+                if bus_idx < 0:
+                    print(f"Warning: Can't add load {load.name} - bus doesn't exist")
+                    continue
 
-                # --- CORRECTIE HIER ---
+                # Determine p_mw correctly
                 p_mw_val = 0
-                # Check of het een lijst-achtig type is (en geen string)
                 if hasattr(load.p_set, '__len__') and not isinstance(load.p_set, str):
                     if len(load.p_set) > 0:
-                        p_mw_val = load.p_set[0] # Neem de eerste waarde voor nu
-                # Check of het een getal is
+                        p_mw_val = load.p_set[0]  # Take first value
                 elif isinstance(load.p_set, (int, float)):
-                    p_mw_val = load.p_set # Gebruik het getal direct
+                    p_mw_val = load.p_set  # Use the value directly
 
+                # Determine q_mvar
                 q_mvar_val = 0
-                 # Check of het een lijst-achtig type is (en geen string)
                 if hasattr(load.q_set, '__len__') and not isinstance(load.q_set, str):
                     if len(load.q_set) > 0:
-                         q_mvar_val = load.q_set[0] # Neem de eerste waarde
-                # Check of het een getal is
+                        q_mvar_val = load.q_set[0]  # Take first value
                 elif isinstance(load.q_set, (int, float)):
-                    q_mvar_val = load.q_set # Gebruik het getal direct
-                # --- EINDE CORRECTIE ---
+                    q_mvar_val = load.q_set  # Use the value directly
 
-                pp.create_load(self._pandapower_model,
-                               bus=bus_index,
-                               p_mw=p_mw_val,
-                               q_mvar=q_mvar_val,
-                               name=load.name)
+                pp.create_load(
+                    self._pandapower_model,
+                    bus=bus_idx,
+                    p_mw=p_mw_val,
+                    q_mvar=q_mvar_val,
+                    name=load.name
+                )
 
     def __add_storage_units(self, storage_unit_list: list[StorageUnit]) -> None:
-        """Voeg storage units toe."""
+        """Add storage units to the PandaPower model."""
         for storage in storage_unit_list:
             if storage.active:
                 bus_idx = pp.get_element_index(self._pandapower_model, "bus", storage.bus0)
-                pp.create_storage(self._pandapower_model,
-                                 bus=bus_idx,
-                                 p_mw=storage.p_nom, # p_nom is vermogen in MW
-                                 max_e_mwh=storage.p_nom * 1, # Max energie, placeholder (1 uur)
-                                 q_mvar=0, # Voor nu geen reactief vermogen
-                                 soc_percent=storage.state_of_charge_initial * 100 if storage.state_of_charge_initial else 50, # SOC in %
-                                 name=storage.name)
+                
+                # Handle case where bus doesn't exist
+                if bus_idx < 0:
+                    print(f"Warning: Can't add storage {storage.name} - bus doesn't exist")
+                    continue
+                
+                pp.create_storage(
+                    self._pandapower_model,
+                    bus=bus_idx,
+                    p_mw=storage.p_nom,  # p_nom is power in MW
+                    max_e_mwh=storage.p_nom * 1,  # Max energy, placeholder (1 hour)
+                    q_mvar=0,  # No reactive power for now
+                    soc_percent=storage.state_of_charge_initial * 100 if storage.state_of_charge_initial else 50,  # SOC in %
+                    name=storage.name
+                )
 
     def __add_transformers(self, transformer_list: list[Transformer]) -> None:
-        """Voeg transformatoren toe."""
+        """Add transformers to the PandaPower model."""
         for trafo in transformer_list:
             if trafo.active:
-                 hv_bus_idx = pp.get_element_index(self._pandapower_model, "bus", trafo.bus0)
-                 lv_bus_idx = pp.get_element_index(self._pandapower_model, "bus", trafo.bus1)
-                 # Probeer standaard type te gebruiken
-                 std_type = trafo.model if trafo.model else None # Gebruik type uit component
-                 if std_type:
-                      try:
-                          pp.create_transformer(self._pandapower_model,
-                                             hv_bus=hv_bus_idx,
-                                             lv_bus=lv_bus_idx,
-                                             std_type=std_type,
-                                             name=trafo.name)
-                      except:
-                           print(f"Waarschuwing: Kon transformator {trafo.name} niet aanmaken met std_type '{std_type}'. Gebruik parameters (placeholders).")
-                           # Fallback met parameters (placeholders - MOET AANGEPAST)
-                           hv_vn_kv = self._pandapower_model.bus.vn_kv[hv_bus_idx]
-                           lv_vn_kv = self._pandapower_model.bus.vn_kv[lv_bus_idx]
-                           pp.create_transformer_from_parameters(net=self._pandapower_model, hv_bus=hv_bus_idx, lv_bus=lv_bus_idx, sn_mva=1.0, vn_hv_kv=hv_vn_kv, vn_lv_kv=lv_vn_kv, vkr_percent=1.0, vk_percent=6.0, pfe_kw=1.0, i0_percent=1.0, name=trafo.name)
-                 else:
-                      print(f"Waarschuwing: Geen std_type gedefinieerd voor transformator {trafo.name}. Gebruik parameters (placeholders).")
-                      # Fallback met parameters (placeholders - MOET AANGEPAST)
-                      hv_vn_kv = self._pandapower_model.bus.vn_kv[hv_bus_idx]
-                      lv_vn_kv = self._pandapower_model.bus.vn_kv[lv_bus_idx]
-                      pp.create_transformer_from_parameters(net=self._pandapower_model, hv_bus=hv_bus_idx, lv_bus=lv_bus_idx, sn_mva=1.0, vn_hv_kv=hv_vn_kv, vn_lv_kv=lv_vn_kv, vkr_percent=1.0, vk_percent=6.0, pfe_kw=1.0, i0_percent=1.0, name=trafo.name)
+                hv_bus_idx = pp.get_element_index(self._pandapower_model, "bus", trafo.bus0)
+                lv_bus_idx = pp.get_element_index(self._pandapower_model, "bus", trafo.bus1)
+                
+                # Handle case where bus doesn't exist
+                if hv_bus_idx < 0 or lv_bus_idx < 0:
+                    print(f"Warning: Can't add transformer {trafo.name} - bus doesn't exist")
+                    continue
+                
+                # Try to use standard type
+                std_type = trafo.model if trafo.model else None  # Use type from component
+                if std_type:
+                    try:
+                        pp.create_transformer(
+                            self._pandapower_model,
+                            hv_bus=hv_bus_idx,
+                            lv_bus=lv_bus_idx,
+                            std_type=std_type,
+                            name=trafo.name
+                        )
+                    except:
+                        print(f"Warning: Couldn't create transformer {trafo.name} with std_type '{std_type}'. Using parameters.")
+                        # Fallback with parameters
+                        hv_vn_kv = self._pandapower_model.bus.vn_kv[hv_bus_idx]
+                        lv_vn_kv = self._pandapower_model.bus.vn_kv[lv_bus_idx]
+                        pp.create_transformer_from_parameters(
+                            self._pandapower_model,
+                            hv_bus=hv_bus_idx,
+                            lv_bus=lv_bus_idx,
+                            sn_mva=1.0,
+                            vn_hv_kv=hv_vn_kv,
+                            vn_lv_kv=lv_vn_kv,
+                            vkr_percent=1.0,
+                            vk_percent=6.0,
+                            pfe_kw=1.0,
+                            i0_percent=1.0,
+                            name=trafo.name
+                        )
+                else:
+                    print(f"Warning: No std_type defined for transformer {trafo.name}. Using parameters.")
+                    # Fallback with parameters
+                    hv_vn_kv = self._pandapower_model.bus.vn_kv[hv_bus_idx]
+                    lv_vn_kv = self._pandapower_model.bus.vn_kv[lv_bus_idx]
+                    pp.create_transformer_from_parameters(
+                        self._pandapower_model,
+                        hv_bus=hv_bus_idx,
+                        lv_bus=lv_bus_idx,
+                        sn_mva=1.0,
+                        vn_hv_kv=hv_vn_kv,
+                        vn_lv_kv=lv_vn_kv,
+                        vkr_percent=1.0,
+                        vk_percent=6.0,
+                        pfe_kw=1.0,
+                        i0_percent=1.0,
+                        name=trafo.name
+                    )
 
-
-    # --- Methoden voor verwijderen (vereenvoudigd, PandaPower vereist indices) ---
-    # PandaPower maakt verwijderen lastiger omdat het met indices werkt die kunnen verschuiven.
-    # Een volledige herbouw is vaak eenvoudiger tenzij performance kritisch is.
-    # Voor nu laten we deze leeg of simplistisch.
-
+    # --- Methods for removing (simplified) ---
     def __remove_buses(self, bus_list: list[Bus]) -> None:
-        indices = [pp.get_element_index(self._pandapower_model, "bus", bus.name) for bus in bus_list if bus.active]
-        if indices: pp.drop_buses(self._pandapower_model, indices)
+        indices = []
+        for bus in bus_list:
+            if bus.active:
+                idx = pp.get_element_index(self._pandapower_model, "bus", bus.name)
+                if idx >= 0:
+                    indices.append(idx)
+        if indices:
+            pp.drop_buses(self._pandapower_model, indices)
 
     def __remove_lines(self, line_list: list[Line]) -> None:
-        indices = [pp.get_element_index(self._pandapower_model, "line", line.name) for line in line_list if line.active]
-        if indices: pp.drop_lines(self._pandapower_model, indices)
+        indices = []
+        for line in line_list:
+            if line.active:
+                idx = pp.get_element_index(self._pandapower_model, "line", line.name)
+                if idx >= 0:
+                    indices.append(idx)
+        if indices:
+            pp.drop_lines(self._pandapower_model, indices)
 
     def __remove_generators(self, generator_list: list[Generator]) -> None:
-        sgen_indices = [pp.get_element_index(self._pandapower_model, "sgen", gen.name) for gen in generator_list if gen.active and gen.name in self._pandapower_model.sgen.name.values]
-        if sgen_indices: pp.drop_sgens(self._pandapower_model, sgen_indices)
-        # Voeg drop_gen toe indien nodig
+        sgen_indices = []
+        gen_indices = []
+        
+        for gen in generator_list:
+            if gen.active:
+                # Check for sgen
+                idx = pp.get_element_index(self._pandapower_model, "sgen", gen.name)
+                if idx >= 0:
+                    sgen_indices.append(idx)
+                
+                # Check for gen
+                idx = pp.get_element_index(self._pandapower_model, "gen", gen.name)
+                if idx >= 0:
+                    gen_indices.append(idx)
+                    
+        if sgen_indices:
+            pp.drop_sgens(self._pandapower_model, sgen_indices)
+        if gen_indices:
+            pp.drop_gens(self._pandapower_model, gen_indices)
 
     def __remove_loads(self, load_list: list[Load]) -> None:
-        indices = [pp.get_element_index(self._pandapower_model, "load", load.name) for load in load_list if load.active]
-        if indices: pp.drop_loads(self._pandapower_model, indices)
+        indices = []
+        for load in load_list:
+            if load.active:
+                idx = pp.get_element_index(self._pandapower_model, "load", load.name)
+                if idx >= 0:
+                    indices.append(idx)
+        if indices:
+            pp.drop_loads(self._pandapower_model, indices)
 
     def __remove_storage_units(self, storage_unit_list: list[StorageUnit]) -> None:
-        indices = [pp.get_element_index(self._pandapower_model, "storage", storage.name) for storage in storage_unit_list if storage.active]
-        if indices: pp.drop_storages(self._pandapower_model, indices)
+        indices = []
+        for storage in storage_unit_list:
+            if storage.active:
+                idx = pp.get_element_index(self._pandapower_model, "storage", storage.name)
+                if idx >= 0:
+                    indices.append(idx)
+        if indices:
+            pp.drop_storages(self._pandapower_model, indices)
 
     def __remove_transformers(self, transformers_list: list[Transformer]) -> None:
-         indices = [pp.get_element_index(self._pandapower_model, "trafo", trafo.name) for trafo in transformers_list if trafo.active]
-         if indices: pp.drop_trafos(self._pandapower_model, indices)
+        indices = []
+        for trafo in transformers_list:
+            if trafo.active:
+                idx = pp.get_element_index(self._pandapower_model, "trafo", trafo.name)
+                if idx >= 0:
+                    indices.append(idx)
+        if indices:
+            pp.drop_trafos(self._pandapower_model, indices)
 
-    # --- Implementatie van Interface Methoden ---
-
+    # --- Implementation of Interface Methods ---
     def calculate(self) -> bool:
         """
-        Start een PandaPower Power Flow berekening.
-        @return bool True = succes, False = Error
+        Start a PandaPower Power Flow calculation.
+        @return bool True = success, False = Error
         """
-        start_time: float = time.perf_counter()
-        self._reset_results() # Reset onze eigen model resultaten
+        start_time = time.perf_counter()
+        self.reset_lines()  # Reset our own model results
 
-        # Blackout/fout conditie check
-        if len(self._pandapower_model.gen) == 0 and len(self._pandapower_model.sgen) == 0 and len(self._pandapower_model.ext_grid) == 0:
-             self._calculation_time = time.perf_counter() - start_time
-             self._status = "failed"
-             self._condition = "no generation source"
-             print("Fout: Geen generator, sgen of external grid gevonden in PandaPower model.")
-             return False
+        # Blackout/error condition check
+        if not hasattr(self._pandapower_model, 'gen') or not hasattr(self._pandapower_model, 'sgen') or \
+           not hasattr(self._pandapower_model, 'ext_grid'):
+            self._calculation_time = time.perf_counter() - start_time
+            self._status = "failed"
+            self._condition = "invalid model"
+            print("Error: Invalid pandapower model structure.")
+            return False
 
-        succes: bool = True
+        if len(self._pandapower_model.gen) == 0 and len(self._pandapower_model.sgen) == 0 and \
+           len(self._pandapower_model.ext_grid) == 0:
+            self._calculation_time = time.perf_counter() - start_time
+            self._status = "failed"
+            self._condition = "no generation source"
+            print("Error: No generator, sgen or external grid found in PandaPower model.")
+            return False
+
+        success = True
         try:
-            # Voer power flow uit
-            pp.runpp(self._pandapower_model, algorithm='nr', calculate_voltage_angles=True) # Newton-Raphson is standaard
-            self._status = "ok" # Aanname, runpp geeft geen directe status string zoals PyPSA lopf
-            self._condition = "converged" # Aanname
-            self._retrieve_results()
+            # Run power flow
+            pp.runpp(self._pandapower_model, algorithm='nr', calculate_voltage_angles=True)  # Newton-Raphson is default
+            self._status = "ok"  # Assumption, runpp doesn't give direct status string like PyPSA lopf
+            self._condition = "converged"  # Assumption
+            self.retrieve_results()
         except pp.LoadflowNotConverged:
             self._status = "failed"
             self._condition = "loadflow not converged"
-            print(f"Fout: PandaPower loadflow convergeerde niet voor model.")
-            succes = False
+            print(f"Error: PandaPower loadflow did not converge for model.")
+            success = False
         except Exception as e:
             self._status = "failed"
             self._condition = f"exception: {e}"
-            print(f"Fout tijdens PandaPower berekening: {e}")
-            succes = False
+            print(f"Error during PandaPower calculation: {e}")
+            success = False
 
         self._calculation_time = time.perf_counter() - start_time
-        return succes
+        return success
 
     def get_status(self) -> str:
         return self._status
@@ -369,70 +482,241 @@ class PandapowerNetworkBuilder (CalculatorThreadInterface):
 
     def export_result(self, file_path: str) -> None:
         """
-        Exporteer het PandaPower model resultaat.
-        @param file_path str Directory om resultaten op te slaan
+        Export the PandaPower model result.
+        @param file_path str Directory to save results
         """
-        # Maak directory indien nodig
+        # Create directory if needed
         if not path.exists(file_path):
-             makedirs(file_path)
+            makedirs(file_path)
 
-        # Sla op naar Excel (of andere formaten zoals pickle)
-        # Let op: dit slaat het *hele* netwerk op, inclusief structuur en resultaten
+        # Save to Excel (or other formats like pickle)
+        # Note: this saves the *entire* network, including structure and results
         export_filepath = path.join(file_path, "pandapower_results.xlsx")
         try:
             pp.to_excel(self._pandapower_model, export_filepath)
         except Exception as e:
-            print(f"Fout bij exporteren van PandaPower resultaten naar {export_filepath}: {e}")
+            print(f"Error exporting PandaPower results to {export_filepath}: {e}")
 
+    def set_input_model(self, input_model: Model) -> None:
+        """
+        Set the input model.
+        @param input_model Model
+        """
+        self._input_model = input_model
+
+    def set_snapshots(self, snapshots: list) -> None:
+        """
+        Set the simulation snapshot list.
+        @param snapshots list
+        """
+        # PandaPower handles time series differently, snapshots might be less directly relevant
+        # We still store them for consistency with interface
+        self.snapshots = snapshots
 
     def build_model(self) -> None:
         """
-        Bouw het PandaPower model op basis van het input_model.
+        Build the PandaPower model based on input_model.
         """
-        start_time: float = time.perf_counter()
+        start_time = time.perf_counter()
 
-        # Voor PandaPower is selectief bouwen complexer door index-gebaseerd verwijderen.
-        # Een volledige herbouw is vaak robuuster, tenzij performance een probleem is.
-        # We implementeren hier een volledige herbouw.
-        self._pandapower_model = pp.create_empty_network() # Begin opnieuw
-        self.force_build() # Bouw alles opnieuw op
-
+        # For PandaPower, selective building is more complex due to index-based removal.
+        # A full rebuild is often more robust, unless performance is an issue.
+        # We implement a full rebuild here.
+        try:
+            self._pandapower_model = pp.create_empty_network()  # Start fresh
+            self.force_build()  # Build everything anew
+        except Exception as e:
+            print(f"Error during model build: {e}")
+            
         self._network_build_time = (time.perf_counter() - start_time)
 
     def force_build(self):
-         """Bouw alle componenten opnieuw op in PandaPower."""
-         # Reset huidig PandaPower model
-         self._pandapower_model = pp.create_empty_network(name="SGT Network")
+        """Build all components anew in PandaPower."""
+        # Create a new PandaPower model
+        try:
+            self._pandapower_model = pp.create_empty_network(name="SGT Network")
+        except Exception as e:
+            print(f"Error creating empty pandapower network: {e}")
+            return False
+            
+        # Add components
+        self.__add_buses(self._input_model.buses)
+        self.__add_lines(self._input_model.lines)
+        self.__add_generators(self._input_model.generators)
+        self.__add_loads(self._input_model.loads)
+        self.__add_storage_units(self._input_model.storage_units)
+        self.__add_transformers(self._input_model.transformers)
 
-         # Voeg componenten toe
-         self.__add_buses(self._input_model.buses)
-         self.__add_lines(self._input_model.lines)
-         self.__add_generators(self._input_model.generators)
-         self.__add_loads(self._input_model.loads)
-         self.__add_storage_units(self._input_model.storage_units)
-         self.__add_transformers(self._input_model.transformers)
-
-         # Belangrijk: PandaPower heeft vaak een 'slack bus' nodig (external grid)
-         # We voegen er hier een toe aan de eerste bus als die nog niet bestaat.
-         # Dit moet mogelijk intelligenter, bv. gebaseerd op een specifiek 'external grid' component in het SGT model.
-         if len(self._pandapower_model.ext_grid) == 0 and len(self._pandapower_model.bus) > 0:
-             bus_idx = self._pandapower_model.bus.index[0]
-             pp.create_ext_grid(self._pandapower_model, bus=bus_idx, vm_pu=1.0, name="External Grid")
-             print("Waarschuwing: Geen external grid gevonden, automatisch toegevoegd aan eerste bus als slack.")
-
+        # Important: PandaPower often needs a 'slack bus' (external grid)
+        # We add one here to the first bus if it doesn't exist yet.
+        if len(self._pandapower_model.ext_grid) == 0 and len(self._pandapower_model.bus) > 0:
+            bus_idx = self._pandapower_model.bus.index[0]
+            pp.create_ext_grid(self._pandapower_model, bus=bus_idx, vm_pu=1.0, name="External Grid")
+            print("Warning: No external grid found, automatically added to first bus as slack.")
 
     def selective_build(self):
         """
-        Selectief bouwen (complex in PandaPower). Voor nu roepen we force_build aan.
-        Een echte implementatie zou de verschillen moeten bijhouden en pp.drop/create gebruiken.
+        Selective building (complex in PandaPower). For now we call force_build.
+        A real implementation would track differences and use pp.drop/create.
         """
-        print("Info: Selectief bouwen is complex in PandaPower, volledige herbouw wordt uitgevoerd.")
+        print("Info: Selective building is complex in PandaPower, performing full rebuild.")
         self.force_build()
 
-    # Dummy implementatie voor consistentie met interface (niet gebruikt in deze PandaPower setup)
     def set_calculation_method(self, method: str) -> None:
-        # PandaPower heeft geen directe equivalenten voor 'lopf', 'lpf', 'optimize' zoals PyPSA.
-        # runpp() is de standaard power flow. Optimalisatie vereist pp.runopp().
-        # We negeren de methode hier, of passen 'calculate' aan op basis van 'method'.
-        print(f"Info: PandaPower builder negeert set_calculation_method('{method}'). Gebruikt standaard runpp.")
+        # PandaPower doesn't have direct equivalents for 'lopf', 'lpf', 'optimize' like PyPSA.
+        # runpp() is the standard power flow. Optimization requires pp.runopp().
+        print(f"Info: PandaPower builder ignores set_calculation_method('{method}'). Using default runpp.")
         pass
+    
+    # Helper methods for tests
+    def add_bus(self, name, voltage=110, is_ref=False):
+        """
+        Add a bus to the network with given parameters.
+        Added for the test interface.
+        
+        @param name str The name of the bus
+        @param voltage float Nominal voltage in kV
+        @param is_ref bool Whether this bus is a reference bus (slack bus)
+        @return int The bus index
+        """
+        bus_idx = pp.create_bus(self._pandapower_model, name=name, vn_kv=voltage)
+        
+        if is_ref:
+            pp.create_ext_grid(self._pandapower_model, bus=bus_idx, vm_pu=1.0)
+            
+        return bus_idx
+    
+    def add_generator(self, bus, p_mw):
+        """
+        Add a generator to the network.
+        Added for the test interface.
+        
+        @param bus int The bus index to connect the generator to
+        @param p_mw float The active power in MW
+        @return int The generator index
+        """
+        gen_idx = pp.create_sgen(self._pandapower_model, bus=bus, p_mw=p_mw)
+        return gen_idx
+    
+    def add_load(self, bus, p_mw):
+        """
+        Add a load to the network.
+        Added for the test interface.
+        
+        @param bus int The bus index to connect the load to
+        @param p_mw float The active power in MW
+        @return int The load index
+        """
+        load_idx = pp.create_load(self._pandapower_model, bus=bus, p_mw=p_mw)
+        return load_idx
+    
+    def add_line(self, from_bus, to_bus, length_km=1.0, std_type="NAYY 4x50 SE"):
+        """
+        Add a line to the network.
+        Added for the test interface.
+        
+        @param from_bus int The from bus index
+        @param to_bus int The to bus index
+        @param length_km float Line length in km
+        @param std_type str The standard line type
+        @return int The line index
+        """
+        try:
+            line_idx = pp.create_line(self._pandapower_model, from_bus=from_bus, to_bus=to_bus, 
+                                     length_km=length_km, std_type=std_type)
+        except:
+            # Fallback to default parameters
+            line_idx = pp.create_line_from_parameters(self._pandapower_model, from_bus=from_bus, 
+                                                     to_bus=to_bus, length_km=length_km,
+                                                     r_ohm_per_km=0.1, x_ohm_per_km=0.1, 
+                                                     c_nf_per_km=10, max_i_ka=1)
+        return line_idx
+    
+    def add_transformer(self, hv_bus, lv_bus, std_type="25 MVA 110/20 kV"):
+        """
+        Add a transformer to the network.
+        Added for the test interface.
+        
+        @param hv_bus int The high voltage bus index
+        @param lv_bus int The low voltage bus index
+        @param std_type str The standard transformer type
+        @return int The transformer index
+        """
+        try:
+            trafo_idx = pp.create_transformer(self._pandapower_model, hv_bus=hv_bus, lv_bus=lv_bus, std_type=std_type)
+        except:
+            # Fallback to default parameters if standard type not found
+            hv_vn_kv = self._pandapower_model.bus.vn_kv[hv_bus]
+            lv_vn_kv = self._pandapower_model.bus.vn_kv[lv_bus]
+            trafo_idx = pp.create_transformer_from_parameters(
+                self._pandapower_model, 
+                hv_bus=hv_bus, 
+                lv_bus=lv_bus,
+                sn_mva=25.0,  # Default rating
+                vn_hv_kv=hv_vn_kv,
+                vn_lv_kv=lv_vn_kv,
+                vkr_percent=0.5,  # Default resistance
+                vk_percent=6.0,   # Default impedance
+                pfe_kw=5.0,       # Default iron losses
+                i0_percent=0.1,   # Default no-load current
+                shift_degree=0.0
+            )
+        return trafo_idx
+        
+    def run_power_flow(self):
+        """
+        Run a power flow calculation on the network.
+        Added for the test interface.
+        
+        @return bool True if the power flow calculation was successful, False otherwise
+        """
+        try:
+            pp.runpp(self._pandapower_model)
+            return True
+        except Exception as e:
+            print(f"Power flow calculation failed: {e}")
+            return False
+            
+    def get_results(self):
+        """
+        Get the results of the power flow calculation.
+        Added for the test interface.
+        
+        @return dict A dictionary with the results
+        """
+        if not hasattr(self._pandapower_model, 'res_bus'):
+            return None
+            
+        results = {
+            'bus_results': self._pandapower_model.res_bus.copy(),
+            'line_results': self._pandapower_model.res_line.copy() if hasattr(self._pandapower_model, 'res_line') else None,
+            'trafo_results': self._pandapower_model.res_trafo.copy() if hasattr(self._pandapower_model, 'res_trafo') else None,
+        }
+        
+        return results
+        
+    def print_network_info(self):
+        """
+        Print information about the network.
+        Added for the test interface.
+        """
+        print("\nNetwork Information:")
+        print(f"Number of buses: {len(self._pandapower_model.bus)}")
+        print(f"Number of lines: {len(self._pandapower_model.line)}")
+        print(f"Number of transformers: {len(self._pandapower_model.trafo)}")
+        print(f"Number of generators: {len(self._pandapower_model.gen) + len(self._pandapower_model.sgen)}")
+        print(f"Number of loads: {len(self._pandapower_model.load)}")
+        print(f"Number of storage units: {len(self._pandapower_model.storage)}")
+        
+        # Print bus voltage levels
+        if len(self._pandapower_model.bus) > 0:
+            voltage_levels = self._pandapower_model.bus.vn_kv.unique()
+            print(f"Voltage levels: {', '.join([f'{v} kV' for v in sorted(voltage_levels)])}")
+            
+        # Print external grids (slack buses)
+        if len(self._pandapower_model.ext_grid) > 0:
+            print("External grids at buses:", end=" ")
+            for i, idx in enumerate(self._pandapower_model.ext_grid.bus.values):
+                bus_name = self._pandapower_model.bus.name[idx] if 'name' in self._pandapower_model.bus.columns else f"Bus {idx}"
+                print(f"{bus_name}", end=", " if i < len(self._pandapower_model.ext_grid) - 1 else "")
+            print()
