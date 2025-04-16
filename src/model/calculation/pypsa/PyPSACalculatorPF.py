@@ -8,7 +8,7 @@
 ##
 
 # Internal imports
-from src.model.calculation.pypsa.PyPSANetworkBuilder import PyPSANetworkBuilder
+from src.model.calculation.pandapower.PandapowerNetworkBuilder import PyPSANetworkBuilder
 
 # External imports
 import time

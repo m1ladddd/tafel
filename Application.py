@@ -30,9 +30,11 @@
 ##
 
 # Imports
+import fix_pandapower  # Deze patch moet vóór alles anders worden geladen
 import json
 import warnings
 import socket
+import sys
 from time import sleep
 from threading import Thread
 from src.SmartGridTable import SmartGridTable
@@ -41,6 +43,10 @@ from src.GUI_MQTT import GUI_MQTT
 from src.Prototype_MQTT import Prototype_MQTT
 from src.Jupyter_Prototype_Mqtt import Jupyter_MQTT
 from src.IndexRemap import IndexRemap
+
+
+# Check if simulation mode is enabled via command line
+simulation_mode = "--simulation" in sys.argv
 
 # We take the local ip address and put it as local broker.
 # (the broker server need to run on the same computer than the one executing the code).
@@ -111,6 +117,20 @@ def init():
     """! 
     Initialize the program.
     """
+    global simulation_mode
+    
+    # Handle simulation mode
+    if simulation_mode:
+        print("────────────────────────────────────────────────────────────────")
+        print("─────────── Running in simulation mode without table ───────────")
+        print("────────────────────────────────────────────────────────────────")
+        
+        # Import mock sections if we're in simulation mode
+        try:
+            from mock_sections import simulate_table_connection
+            simulate_table_connection()
+        except ImportError:
+            print("Warning: mock_sections.py not found, simulation may not work correctly")
 
     if (table.get_local_setup()):
 
@@ -175,16 +195,21 @@ def init():
     timeout_limit = 6.0
     timeout = False
 
-    while(table.table_is_online() == False and timeout == False):
-        sleep(refresh_rate)
-        timer += refresh_rate
-        if (timer >= timer_limit):
-            time_left = timeout_limit - timer_limit
-            print("Timeout in [" + str(time_left) + "] seconds...")
-            timer_limit = timer_limit + 1.0
-        if (timer >= timeout_limit):
-            print("Timeout when trying to connect...")
-            timeout = True
+    # Skip waiting for physical connections if in simulation mode
+    if not simulation_mode:
+        while(table.table_is_online() == False and timeout == False):
+            sleep(refresh_rate)
+            timer += refresh_rate
+            if (timer >= timer_limit):
+                time_left = timeout_limit - timer_limit
+                print("Timeout in [" + str(time_left) + "] seconds...")
+                timer_limit = timer_limit + 1.0
+            if (timer >= timeout_limit):
+                print("Timeout when trying to connect...")
+                timeout = True
+    else:
+        # In simulation mode, we pretend tables are already connected
+        print("Simulation mode: Tables connected automatically")
 
     print("────────────────────────────────────────────────────────────────")
     print("────────────── Retrieving SmartGridTable Modules ───────────────")
@@ -198,11 +223,16 @@ def init():
     timeout_limit = 3.0
     timeout = False
 
-    while(table.table_is_rfid_online() == False and timeout == False):
-        sleep(refresh_rate)
-        timer += refresh_rate
-        if (timer >= timeout_limit):
-            timeout = True
+    # Skip waiting for RFID readers if in simulation mode
+    if not simulation_mode:
+        while(table.table_is_rfid_online() == False and timeout == False):
+            sleep(refresh_rate)
+            timer += refresh_rate
+            if (timer >= timeout_limit):
+                timeout = True
+    else:
+        # In simulation mode, we pretend RFID readers are already online
+        print("Simulation mode: RFID readers connected automatically")
 
     table.modules_print_status()
     table.modules_enable_messages(True)
@@ -679,98 +709,113 @@ def jupyter_handler(input):
                                 known_command = True
                                 print("----------------------------------------------------------------")
        
+# Main Program Entry Point - Define application_main() for compatibility with run_simulation.py
+def application_main(simulation_mode_param=None, simulate_table_connection=None):
+    global simulation_mode
+    global global_console_input  # Voeg deze regel toe
+    global running               # Zorg dat running ook global is
+    global force_update          # Zorg dat force_update ook global is
+    global mode                  # Zorg dat mode ook global is
+    
+    # Override simulation_mode if provided as parameter
+    if simulation_mode_param is not None:
+        simulation_mode = simulation_mode_param
+    
+    # Run the table simulation
+    init()
 
-# Main routine
-init()
+    # seperate thread so table routine keeps running during keyboard input
+    # (keyboard input stalls main thread)
+    console_thread = Thread(target=console_thread_function)
+    console_thread.start()
 
-# seperate thread so table routine keeps running during keyboard input
-# (keyboard input stalls main thread)
-console_thread = Thread(target=console_thread_function)
-console_thread.start()
+    timer = 0
+    force_update = True
 
-timer = 0
-force_update = True
+    while(running):
+        # De rest van je main loop code blijft hetzelfde
+        sleep(refresh_rate)
 
-while(running):
+        # GUI mqtt message handler
+        if (len(mqtt_gui.message_buffer) > 0):
+            for message in mqtt_gui.message_buffer:
+                ui_handler(message)
+            mqtt_gui.message_buffer.clear()
 
-    sleep(refresh_rate)
+        if (len(prototype_gui.message_buffer) > 0):
+            for message in prototype_gui.message_buffer:
+                proto_handler(message)
+            prototype_gui.message_buffer.clear()
 
-    # GUI mqtt message handler
-    if (len(mqtt_gui.message_buffer) > 0):
-        for message in mqtt_gui.message_buffer:
-            ui_handler(message)
-        mqtt_gui.message_buffer.clear()
+        if (len(jupyter.message_buffer) > 0):
+            for message in jupyter.message_buffer:
+                jupyter_handler(message)
+            jupyter.message_buffer.clear()
 
-    if (len(prototype_gui.message_buffer) > 0):
-        for message in prototype_gui.message_buffer:
-            proto_handler(message)
-        prototype_gui.message_buffer.clear()
+        # Console input message handler
+        if (global_console_input != ""):
+            console_handler(global_console_input)
+            global_console_input  = ""
 
-    if (len(jupyter.message_buffer) > 0):
-        for message in jupyter.message_buffer:
-            jupyter_handler(message)
-        jupyter.message_buffer.clear()
+        # Update elapsed time for table instance
+        table.append_delta_time(refresh_rate)
+        table.update()
 
-    # Console input message handler
-    if (global_console_input != ""):
-        console_handler(global_console_input)
-        global_console_input  = ""
+        timer = timer + refresh_rate
 
-    # Update elapsed time for table instance
-    table.append_delta_time(refresh_rate)
-    table.update()
+        if(force_update):
+            force_update = False
+            timer = 0
 
-    timer = timer + refresh_rate
+            table.simulation_changed = True
 
-    if(force_update):
-        force_update = False
-        timer = 0
+            if (mode == "optimize" or mode == "lopf" or mode == "lpf" or mode == "pf"):
+                table.set_calculation_method(mode)
+                
+            table.force_calculate()
+            ui_handler({'type': 'SEND_SNAPSHOTS'})
+            print("────────────────────────────────────────────────────────────────")
 
-        table.simulation_changed = True
-
-        if (mode == "optimize" or mode == "lopf" or mode == "lpf" or mode == "pf"):
+        if (table.modules_if_changed()):
+            timer = 0            
             table.set_calculation_method(mode)
+            table.selective_calculate()
+            print("────────────────────────────────────────────────────────────────")
+
+            ui_handler({'type': 'SEND_SNAPSHOTS'})
             
-        table.force_calculate()
-        ui_handler({'type': 'SEND_SNAPSHOTS'})
-        print("────────────────────────────────────────────────────────────────")
+        if (table.get_lep_update_flag()):
+            table.reset_led_update_flag()
+            table.update_ledstrips(0)
+            table.mqtt_selective_publish()
 
-    if(table.modules_if_changed()):
-        timer = 0            
-        table.set_calculation_method(mode)
-        table.selective_calculate()
-        print("────────────────────────────────────────────────────────────────")
+        if (table.simulation_changed == True):
+            table.simulation_changed = False
 
-        ui_handler({'type': 'SEND_SNAPSHOTS'})
-        
-    if (table.get_lep_update_flag()):
-        table.reset_led_update_flag()
-        table.update_ledstrips(0)
-        table.mqtt_selective_publish()
+            changes = table.get_module_changes()
+            table.empty_module_change_buffer()
 
-    if (table.simulation_changed == True):
-        table.simulation_changed = False
-
-        changes = table.get_module_changes()
-        table.empty_module_change_buffer()
-
-        for change in changes:
-            table_section = change["table_section"]
-            modules = change["buffer"]
-            for module in modules:
-                message = {"type": "MODULE_UPDATE", "payload": {"table_section": table_section, **module}}
-                mqtt_gui.mqtt_publish(json.dumps(message))
+            for change in changes:
+                table_section = change["table_section"]
+                modules = change["buffer"]
+                for module in modules:
+                    message = {"type": "MODULE_UPDATE", "payload": {"table_section": table_section, **module}}
+                    mqtt_gui.mqtt_publish(json.dumps(message))
 
 
-# on program shutdown
-if (table.get_local_setup()):
-    udp_broadcaster.stop_broadcasting()
+    # on program shutdown
+    if (table.get_local_setup()):
+        udp_broadcaster.stop_broadcasting()
 
-console_thread.join()
+    console_thread.join()
 
-table.mqtt_disconnect()
-table.shutdown()
+    table.mqtt_disconnect()
+    table.shutdown()
 
-print("────────────────────────────────────────────────────────────────")
-print("───────────────── Goodbye, until next time! ────────────────────")
-print("────────────────────────────────────────────────────────────────")
+    print("────────────────────────────────────────────────────────────────")
+    print("───────────────── Goodbye, until next time! ────────────────────")
+    print("────────────────────────────────────────────────────────────────")
+
+# If this file is run directly, start the application
+if __name__ == "__main__":
+    application_main()

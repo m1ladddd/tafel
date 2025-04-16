@@ -267,5 +267,21 @@
 				"p_set": null
 			}
 		}
+	},
+
+	"modules": {
+		"generators": {
+			"max_power": 1000,
+			"min_power": 0
+		},
+		"loads": {
+			"max_power": 1000,
+			"min_power": 0
+		},
+		"storage": {
+			"max_power": 500,
+			"min_power": -500,
+			"max_capacity": 1000
+		}
 	}
 }
