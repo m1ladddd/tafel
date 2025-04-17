@@ -30,7 +30,7 @@
 ##
 
 # Imports
-import fix_pandapower  # Deze patch moet vóór alles anders worden geladen
+#import fix_pandapower  # Deze patch moet vóór alles anders worden geladen
 import json
 import warnings
 import socket
