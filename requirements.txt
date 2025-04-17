@@ -5,6 +5,7 @@ pvlib==0.9.5
 paho-mqtt==1.6.1
 pandapower==2.13.1
 pvfactors==1.5.2
+numba==0.61.2
 
 # Development dependencies
 pytest
