@@ -30,7 +30,6 @@ class Decoder:
         ## Input byte buffer.
         # Ensure buffer is a numpy array
         if not isinstance(buffer, np.ndarray):
-            # Try converting if it's list-like, otherwise raise error
             try:
                  self.buffer: np.ndarray = np.array(buffer, dtype=np.uint8)
             except Exception as e:
@@ -47,7 +46,6 @@ class Decoder:
         Read a unsigned 8-bit integer from the byte stream.
         @return np.uint8
         """
-        # Ensure index is within bounds before reading
         if self.index >= len(self.buffer):
             raise IndexError(f"Read index {self.index} out of bounds for buffer size {len(self.buffer)}")
         value = np.uint8(self.buffer[self.index])
@@ -60,11 +58,9 @@ class Decoder:
         Read a unsigned 16-bit integer from the byte stream.
         @return np.uint16
         """
-        # Ensure index is within bounds before reading
         if self.index + 1 >= len(self.buffer):
             raise IndexError(f"Read index {self.index+1} out of bounds for buffer size {len(self.buffer)}")
         value = np.uint16(0)
-        # Cast bytes to prevent potential overflow issues during shift if using Python ints
         byte0 = np.uint16(self.buffer[self.index+0]) # MSB
         byte1 = np.uint16(self.buffer[self.index+1]) # LSB
         value = np.bitwise_or(value, np.left_shift(byte0, 8))
@@ -78,7 +74,6 @@ class Decoder:
         Read a unsigned 32-bit integer from the byte stream.
         @return np.uint32
         """
-         # Ensure index is within bounds before reading
         if self.index + 3 >= len(self.buffer):
             raise IndexError(f"Read index {self.index+3} out of bounds for buffer size {len(self.buffer)}")
         value = np.uint32(0)
@@ -100,9 +95,10 @@ class Decoder:
         @return np.int8
         """
         u_value: np.uint8 = self.read_UINT8()
-        # CORRECTION: Use .view() for robust unsigned-to-signed conversion
-        value: np.int8 = u_value.view(np.int8)
-        return value
+        # TERUG NAAR ORIGINELE LOGICA: aftrekken van offset
+        value: np.int8 = u_value - 128 # Kan RuntimeWarning geven, maar werkt mogelijk met numpy 1.26.1
+        # Casten naar np.int8 gebeurt impliciet of bij return
+        return np.int8(value)
 
 
     def read_INT16(self) -> np.int16:
@@ -111,9 +107,9 @@ class Decoder:
         @return np.int16
         """
         u_value: np.uint16 = self.read_UINT16()
-        # CORRECTION: Use .view() for robust unsigned-to-signed conversion
-        value: np.int16 = u_value.view(np.int16)
-        return value
+        # TERUG NAAR ORIGINELE LOGICA: aftrekken van offset
+        value: np.int16 = u_value - 32768
+        return np.int16(value)
 
 
     def read_INT32(self) -> np.int32:
@@ -122,6 +118,6 @@ class Decoder:
         @return np.int32
         """
         u_value: np.uint32 = self.read_UINT32()
-        # CORRECTION: Use .view() for robust unsigned-to-signed conversion
-        value: np.int32 = u_value.view(np.int32)
-        return value
+        # TERUG NAAR ORIGINELE LOGICA: aftrekken van offset
+        value: np.int32 = u_value - 2147483648
+        return np.int32(value)
