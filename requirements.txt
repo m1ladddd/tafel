@@ -1,5 +1,5 @@
-numpy
-pandas
+numpy==1.26.1
+pandas==2.0.3
 matplotlib
 pvlib
 paho-mqtt

@@ -1,3 +1,5 @@
+# src/networking/Decoder.py
+
 ##
 # @file Decoder.py
 # @author Jop Merz
@@ -26,7 +28,15 @@ class Decoder:
         """
 
         ## Input byte buffer.
-        self.buffer: np.array = buffer
+        # Ensure buffer is a numpy array
+        if not isinstance(buffer, np.ndarray):
+            # Try converting if it's list-like, otherwise raise error
+            try:
+                 self.buffer: np.ndarray = np.array(buffer, dtype=np.uint8)
+            except Exception as e:
+                 raise TypeError(f"Input buffer must be a NumPy array or convertible. Error: {e}")
+        else:
+            self.buffer: np.ndarray = buffer
 
         ## Read index.
         self.index: int = start_index
@@ -39,7 +49,7 @@ class Decoder:
         """
         # Ensure index is within bounds before reading
         if self.index >= len(self.buffer):
-            raise IndexError("Read index out of bounds for buffer")
+            raise IndexError(f"Read index {self.index} out of bounds for buffer size {len(self.buffer)}")
         value = np.uint8(self.buffer[self.index])
         self.index += 1
         return value
@@ -52,13 +62,13 @@ class Decoder:
         """
         # Ensure index is within bounds before reading
         if self.index + 1 >= len(self.buffer):
-            raise IndexError("Read index out of bounds for buffer")
+            raise IndexError(f"Read index {self.index+1} out of bounds for buffer size {len(self.buffer)}")
         value = np.uint16(0)
         # Cast bytes to prevent potential overflow issues during shift if using Python ints
-        byte0 = np.uint16(self.buffer[self.index+0])
-        byte1 = np.uint16(self.buffer[self.index+1])
+        byte0 = np.uint16(self.buffer[self.index+0]) # MSB
+        byte1 = np.uint16(self.buffer[self.index+1]) # LSB
         value = np.bitwise_or(value, np.left_shift(byte0, 8))
-        value = np.bitwise_or(value, byte1) # No shift needed for the least significant byte
+        value = np.bitwise_or(value, byte1)
         self.index += 2
         return value
 
@@ -70,12 +80,12 @@ class Decoder:
         """
          # Ensure index is within bounds before reading
         if self.index + 3 >= len(self.buffer):
-            raise IndexError("Read index out of bounds for buffer")
+            raise IndexError(f"Read index {self.index+3} out of bounds for buffer size {len(self.buffer)}")
         value = np.uint32(0)
-        byte0 = np.uint32(self.buffer[self.index+0])
+        byte0 = np.uint32(self.buffer[self.index+0]) # MSB
         byte1 = np.uint32(self.buffer[self.index+1])
         byte2 = np.uint32(self.buffer[self.index+2])
-        byte3 = np.uint32(self.buffer[self.index+3])
+        byte3 = np.uint32(self.buffer[self.index+3]) # LSB
         value = np.bitwise_or(value, np.left_shift(byte0, 24))
         value = np.bitwise_or(value, np.left_shift(byte1, 16))
         value = np.bitwise_or(value, np.left_shift(byte2, 8))
@@ -90,8 +100,8 @@ class Decoder:
         @return np.int8
         """
         u_value: np.uint8 = self.read_UINT8()
-        # CORRECTION: Cast u_value to the target signed type BEFORE subtracting offset
-        value: np.int8 = np.int8(u_value) - np.int8(128)
+        # CORRECTION: Use .view() for robust unsigned-to-signed conversion
+        value: np.int8 = u_value.view(np.int8)
         return value
 
 
@@ -101,8 +111,8 @@ class Decoder:
         @return np.int16
         """
         u_value: np.uint16 = self.read_UINT16()
-        # CORRECTION: Cast u_value to the target signed type BEFORE subtracting offset
-        value: np.int16 = np.int16(u_value) - np.int16(32768)
+        # CORRECTION: Use .view() for robust unsigned-to-signed conversion
+        value: np.int16 = u_value.view(np.int16)
         return value
 
 
@@ -112,20 +122,6 @@ class Decoder:
         @return np.int32
         """
         u_value: np.uint32 = self.read_UINT32()
-         # CORRECTION: Cast u_value to the target signed type BEFORE subtracting offset
-        # Using Python's arbitrary precision int for offset is fine here
-        offset = 2147483648
-        # Check if u_value is large enough before casting to avoid potential issues
-        if u_value >= offset:
-             # Cast to signed *after* potentially subtracting offset as intermediate
-             # Or ensure calculation happens in a larger type if needed
-             value: np.int32 = np.int32(u_value - offset) # This works if u_value >= offset
-        else:
-             # If u_value < offset, the result is negative.
-             # Cast u_value to signed first, then subtract offset (promotes offset too)
-             value: np.int32 = np.int32(u_value) - np.int32(offset)
-
-        # Alternative robust way using NumPy's view method (might be cleaner):
-        # value = u_value.view(np.int32)
-
+        # CORRECTION: Use .view() for robust unsigned-to-signed conversion
+        value: np.int32 = u_value.view(np.int32)
         return value
