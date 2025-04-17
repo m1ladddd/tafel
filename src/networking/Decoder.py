@@ -37,6 +37,9 @@ class Decoder:
         Read a unsigned 8-bit integer from the byte stream.
         @return np.uint8
         """
+        # Ensure index is within bounds before reading
+        if self.index >= len(self.buffer):
+            raise IndexError("Read index out of bounds for buffer")
         value = np.uint8(self.buffer[self.index])
         self.index += 1
         return value
@@ -47,9 +50,15 @@ class Decoder:
         Read a unsigned 16-bit integer from the byte stream.
         @return np.uint16
         """
+        # Ensure index is within bounds before reading
+        if self.index + 1 >= len(self.buffer):
+            raise IndexError("Read index out of bounds for buffer")
         value = np.uint16(0)
-        value = np.bitwise_or(value, np.left_shift(self.buffer[self.index+0], 8))
-        value = np.bitwise_or(value, np.left_shift(self.buffer[self.index+1], 0))
+        # Cast bytes to prevent potential overflow issues during shift if using Python ints
+        byte0 = np.uint16(self.buffer[self.index+0])
+        byte1 = np.uint16(self.buffer[self.index+1])
+        value = np.bitwise_or(value, np.left_shift(byte0, 8))
+        value = np.bitwise_or(value, byte1) # No shift needed for the least significant byte
         self.index += 2
         return value
 
@@ -59,11 +68,18 @@ class Decoder:
         Read a unsigned 32-bit integer from the byte stream.
         @return np.uint32
         """
+         # Ensure index is within bounds before reading
+        if self.index + 3 >= len(self.buffer):
+            raise IndexError("Read index out of bounds for buffer")
         value = np.uint32(0)
-        value = np.bitwise_or(value, np.left_shift(self.buffer[self.index+0], 24))
-        value = np.bitwise_or(value, np.left_shift(self.buffer[self.index+1], 16))
-        value = np.bitwise_or(value, np.left_shift(self.buffer[self.index+2], 8))
-        value = np.bitwise_or(value, np.left_shift(self.buffer[self.index+3], 0))
+        byte0 = np.uint32(self.buffer[self.index+0])
+        byte1 = np.uint32(self.buffer[self.index+1])
+        byte2 = np.uint32(self.buffer[self.index+2])
+        byte3 = np.uint32(self.buffer[self.index+3])
+        value = np.bitwise_or(value, np.left_shift(byte0, 24))
+        value = np.bitwise_or(value, np.left_shift(byte1, 16))
+        value = np.bitwise_or(value, np.left_shift(byte2, 8))
+        value = np.bitwise_or(value, byte3)
         self.index += 4
         return value
 
@@ -74,7 +90,8 @@ class Decoder:
         @return np.int8
         """
         u_value: np.uint8 = self.read_UINT8()
-        value: np.int8 = u_value - 128
+        # CORRECTION: Cast u_value to the target signed type BEFORE subtracting offset
+        value: np.int8 = np.int8(u_value) - np.int8(128)
         return value
 
 
@@ -84,7 +101,8 @@ class Decoder:
         @return np.int16
         """
         u_value: np.uint16 = self.read_UINT16()
-        value: np.int16 = u_value - 32768
+        # CORRECTION: Cast u_value to the target signed type BEFORE subtracting offset
+        value: np.int16 = np.int16(u_value) - np.int16(32768)
         return value
 
 
@@ -94,6 +112,20 @@ class Decoder:
         @return np.int32
         """
         u_value: np.uint32 = self.read_UINT32()
-        value: np.int32 = u_value - 2147483648
-        return value
+         # CORRECTION: Cast u_value to the target signed type BEFORE subtracting offset
+        # Using Python's arbitrary precision int for offset is fine here
+        offset = 2147483648
+        # Check if u_value is large enough before casting to avoid potential issues
+        if u_value >= offset:
+             # Cast to signed *after* potentially subtracting offset as intermediate
+             # Or ensure calculation happens in a larger type if needed
+             value: np.int32 = np.int32(u_value - offset) # This works if u_value >= offset
+        else:
+             # If u_value < offset, the result is negative.
+             # Cast u_value to signed first, then subtract offset (promotes offset too)
+             value: np.int32 = np.int32(u_value) - np.int32(offset)
 
+        # Alternative robust way using NumPy's view method (might be cleaner):
+        # value = u_value.view(np.int32)
+
+        return value
