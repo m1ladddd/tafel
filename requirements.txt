@@ -1,8 +1,9 @@
 numpy==1.26.1
 pandas==2.0.3
+PySide6>=6.0.0,<7.0.0   # Toegevoegd voor de GUI
+paho-mqtt>=1.6.0,<2.0.0   # Toegevoegd/Aangepast voor MQTT
 matplotlib
 pvlib
-paho-mqtt
 pandapower
 pvfactors
 numba

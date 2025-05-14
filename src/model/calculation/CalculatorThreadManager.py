@@ -1,302 +1,216 @@
 ##
 # @file CalculatorThreadManager.py
 #
-# @brief Manager of one or multiple calculation threads.
-# CalculatorThreadManager takes a list of power grid models and divedes them over multiple threads.
-# Multiple calculation methods are supported: LOPF, LPF and PF.
+# @brief Manages calculation threads for segmented power grid models using Pandapower.
+# This class receives segmented models and assigns them to separate threads
+# for parallel calculation using the appropriate Pandapower calculator based on the selected mode.
 #
-# @section author_Model Author(s)
+# @section author_Author(s)
 # - Created by Jop Merz on 31/05/2023.
-# - Modified by Jop Merz on 11/10/2023.
-# - Modified by Milad on 31-03-2025
+# - Modified by [Your Name/Alias] on [Date] to use Pandapower exclusively.
 ##
 
 # Internal imports
 from src.model.Model import Model
-from src.model.calculation.CalculatorThreadInterface import CalculatorThreadInterface
-
-# PyPSA calculator imports
-from src.model.calculation.pypsa.PyPSACalculatorOptimize import PyPSACalculatorOptimize
-from src.model.calculation.pypsa.PyPSACalculatorLOPF import PyPSACalculatorLOPF
-from src.model.calculation.pypsa.PyPSACalculatorLPF import PyPSACalculatorLPF
-from src.model.calculation.pypsa.PyPSACalculatorPF import PyPSACalculatorPF
-
-# Pandapower calculator imports
-from src.model.calculation.pandapower.PandapowerCalculatorOptimize import PandapowerCalculatorOptimize
-from src.model.calculation.pandapower.PandapowerCalculatorLOPF import PandapowerCalculatorLOPF
-from src.model.calculation.pandapower.PandapowerCalculatorLPF import PandapowerCalculatorLPF
+# --- Import ONLY Pandapower Calculators ---
+from src.model.calculation.pandapower.PandapowerNetworkBuilder import PandapowerNetworkBuilder # Assuming this is needed by calculators
 from src.model.calculation.pandapower.PandapowerCalculatorPF import PandapowerCalculatorPF
+from src.model.calculation.pandapower.PandapowerCalculatorLPF import PandapowerCalculatorLPF
+from src.model.calculation.pandapower.PandapowerCalculatorLOPF import PandapowerCalculatorLOPF
+from src.model.calculation.pandapower.PandapowerCalculatorOptimize import PandapowerCalculatorOptimize # If optimize maps to a specific PP calc
+# --- PyPSA Imports Removed ---
+# from src.model.calculation.pypsa.PyPSANetworkBuilder import PyPSANetworkBuilder
+# from src.model.calculation.pypsa.PyPSACalculatorPF import PyPSACalculatorPF
+# ... etc for other PyPSA calculators ...
 
 # External imports
-from time import perf_counter
-from threading import Thread, Event
+from threading import Thread, Lock
+from time import perf_counter_ns, sleep
+import pandas as pd # Needed for snapshots
 
-"""! 
-Dataclass for transferring data between the CalculatorThreadManager instance and its worker threads.
-"""
-class ThreadData:
-    def __init__(self) -> None:
+# --- CalculatorThread Class (Assuming it's generic enough or defined elsewhere) ---
+# If CalculatorThread itself imported PyPSA, it needs fixing too.
+# For now, assume it takes a calculator instance and calls its methods.
+# If it's defined here, ensure it doesn't import PyPSA.
+# Example structure (adjust if CalculatorThread is imported):
+class CalculatorThread (Thread):
+    """
+    Thread responsible for running a calculation on a single model segment.
+    """
+    def __init__(self, model: Model, calculator_instance, snapshots: pd.Index | None):
+        Thread.__init__(self)
+        self.model = model
+        self.calculator = calculator_instance # Expects a Pandapower calculator instance
+        self.snapshots = snapshots
+        self.succes = False
+        self.elapsed_time = 0.0
 
-        ## Worker thread instance
-        self.calculation_instance: CalculatorThreadInterface = None
+    def run(self):
+        start_time = perf_counter_ns()
+        try:
+            # Assume calculator instances have a 'calculate' method
+            if self.calculator:
+                 print(f"Thread starting calculation for model segment (Buses: {[b.name for b in self.model.buses]}) using {type(self.calculator).__name__}")
+                 # Pass model and snapshots to the Pandapower calculator instance
+                 self.calculator.set_input_model(self.model)
+                 self.calculator.set_snapshots(self.snapshots)
+                 self.succes = self.calculator.calculate() # Execute calculation
+            else:
+                 print("Error: No calculator instance provided to thread.")
+                 self.succes = False
 
-        ## Input power grid model
-        self.model: Model = None
+        except Exception as e:
+            print(f"Error during calculation in thread: {e}")
+            import traceback
+            traceback.print_exc() # Print full traceback for debugging
+            self.succes = False
+        finally:
+            self.elapsed_time = (perf_counter_ns() - start_time) / 1000 / 1000 / 1000 # seconds
+            print(f"Thread finished calculation. Success: {self.succes}, Time: {self.elapsed_time:.4f} s")
 
-        ## List of snapshots
-        self.snapshots: list[int] = []
-
-        ## Power grid model ID
-        self.model_id: int = -1
-
-        ## Start signal for the worker thread
-        self.wakeup_event: Event = Event()
-
-        ## Worker thread finished signal for the main thread
-        self.finished_event: Event = Event()
-
-        ## Calcualtion time
-        self.calculation_time: float = 0.0
-
-        ## Power grid build time
-        self.build_time: float = 0.0
-
-        ## Status of the calculation
-        self.status: str = "none"
-
-        ## Extra status information of the calculation
-        self.status_extended: str = "undefined"
-
-
-"""
-CalculatorThreadManager takes a list of power grid models and divedes them over multiple threads.
-Multiple calculation methods are supported: LOPF, LPF and PF.
-"""
+# --- CalculatorThreadManager Class ---
 class CalculatorThreadManager:
-    def __init__(self) -> None:
-        """! 
-        Constructor.
-        """
-
-        ## The input list of Model instances. Each Model will get its own worker thread assigned.
-        self.__model_list: list[Model] = []
-
-        ## List of Python Thread instances.
-        self.__worker_thread_instances: list[Thread] = []
-
-        ## List of shared data between the CalculatorThreadManager instance and the worker threads.
-        self.__worker_threads: list[ThreadData] = []
-
-        ## Input calculation method (lopf, optimize, lpf or pf)
-        self.__calculation_method = "optimize"
-
-        ## Flag signaling all worker threads to shutdown
-        self.__shutdown: bool = False
-
-        ## A list of all snapshots (for dynamic calculations)
-        self.__snapshots: list[int] = [0]
-
-        ## Use Pandapower (True) or PyPSA (False)
-        self.__use_pandapower: bool = True
-
-        # Create and init 5 worker threads
-        for i in range(5):
-            thread: ThreadData = ThreadData()
-            thread.calculation_instance = self.__create_calculation_instance(self.__calculation_method)
-            thread.model = None
-            thread.snapshots = self.__snapshots
-            thread.model_id = i
-            thread.status = "ok"
-            thread.status_extended = "booting"
-            self.__add_thread(thread_data=thread)
-
-
-    def __create_calculation_instance(self, method: str) -> CalculatorThreadInterface:
-        """
-        Create and return a calculation instance depending on the input string.
-        @param method str Input string (lopf, lpf or pf).
-        @return instance with a CalculatorThreadInterface interface
-        """
-        if self.__use_pandapower:
-            # Pandapower implementations
-            if (method == "optimize"):
-                return PandapowerCalculatorOptimize()
-            if (method == "lopf"):
-                return PandapowerCalculatorLOPF()
-            if (method == "lpf"):
-                return PandapowerCalculatorLPF()
-            if (method == "pf"):
-                return PandapowerCalculatorPF()
-        else:
-            # PyPSA implementations
-            if (method == "optimize"):
-                return PyPSACalculatorOptimize()
-            if (method == "lopf"):
-                return PyPSACalculatorLOPF()
-            if (method == "lpf"):
-                return PyPSACalculatorLPF()
-            if (method == "pf"):
-                return PyPSACalculatorPF()
-        return None
-
+    """
+    Manages multiple CalculatorThreads for parallel processing of segmented models
+    using the selected Pandapower calculation method.
+    """
+    def __init__(self):
+        """ Constructor. """
+        ## List of active calculation threads.
+        self.__threads: list[CalculatorThread] = []
+        ## Lock for managing thread list access (optional but good practice).
+        self.__thread_lock: Lock = Lock()
+        ## Selected calculation method name ('pf', 'lpf', 'lopf', 'optimize').
+        self.__calculation_method: str = "pf" # Default to Power Flow
+        ## Snapshots to be used for the calculations.
+        self.__snapshots: pd.Index | None = None
 
     def set_calculation_method(self, method: str) -> None:
+        """ Set the desired calculation method (maps to Pandapower calculators). """
+        valid_methods = ["pf", "lpf", "lopf", "optimize"]
+        if method.lower() in valid_methods:
+            self.__calculation_method = method.lower()
+            print(f"CalculatorThreadManager: Calculation method set to {self.__calculation_method.upper()} (Pandapower)")
+        else:
+            print(f"Warning: Invalid calculation method '{method}'. Using default '{self.__calculation_method}'.")
+
+    def set_snapshots(self, snapshots: pd.Index | list | None) -> None:
+        """ Set the snapshots for the calculations. """
+        if snapshots is None:
+            self.__snapshots = None
+        elif isinstance(snapshots, list):
+             # Convert list to pandas Index if needed by calculators
+             try:
+                 self.__snapshots = pd.Index(snapshots)
+                 print(f"CalculatorThreadManager: Snapshots set (converted from list). Count: {len(self.__snapshots)}")
+             except Exception as e:
+                 print(f"Error converting snapshots list to pd.Index: {e}")
+                 self.__snapshots = None # Reset on error
+        elif isinstance(snapshots, pd.Index):
+             self.__snapshots = snapshots
+             print(f"CalculatorThreadManager: Snapshots set. Count: {len(self.__snapshots)}")
+        else:
+             print(f"Warning: Invalid type for snapshots: {type(snapshots)}. Expected list, pd.Index, or None.")
+             self.__snapshots = None
+
+
+    def _get_calculator_instance(self) -> object | None:
+        """ Creates an instance of the appropriate Pandapower calculator based on the selected method. """
+        method = self.__calculation_method
+        print(f"Creating Pandapower calculator instance for method: {method.upper()}")
+        if method == "pf":
+            return PandapowerCalculatorPF()
+        elif method == "lpf":
+            return PandapowerCalculatorLPF()
+        elif method == "lopf":
+            return PandapowerCalculatorLOPF()
+        elif method == "optimize":
+            # Determine which calculator 'optimize' maps to in Pandapower context
+            # Often OPF (Optimal Power Flow) is used. LOPF is linear.
+            # If PandapowerCalculatorOptimize exists and handles non-linear OPF, use that.
+            # Otherwise, map to LOPF or raise an error if not implemented.
+            # return PandapowerCalculatorOptimize() # If this class exists and does OPF
+            print("Mapping 'optimize' mode to LOPF for Pandapower.")
+            return PandapowerCalculatorLOPF() # Defaulting optimize to LOPF for now
+        else:
+            print(f"Error: Unknown calculation method '{method}' requested.")
+            return None
+
+    def calculate(self, model_list: list[Model]) -> bool:
         """
-        Set the calculation method of this CalculationThreadManager.
-        @param method str Calculation method (lopf, lpf or pf).
+        Starts calculation threads for each model in the list using the selected Pandapower method.
+        Waits for all threads to complete.
+        Returns True if all calculations were successful, False otherwise.
         """
-        ## Create the corresponding calculation instances for each worker thread
-        if (self.__calculation_method != method):
-            for thread_data in self.__worker_threads:
-                thread_data.calculation_instance = self.__create_calculation_instance(method)
+        if not model_list:
+            print("CalculatorThreadManager: No models provided for calculation.")
+            return True # No work to do, technically successful
 
-        self.__calculation_method = method
+        # Clear previous threads
+        self.shutdown() # Ensure no old threads are lingering
 
-    
-    def set_calculation_engine(self, use_pandapower: bool) -> None:
-        """
-        Set the calculation engine to use (Pandapower or PyPSA).
-        @param use_pandapower bool True to use Pandapower, False to use PyPSA
-        """
-        if self.__use_pandapower != use_pandapower:
-            self.__use_pandapower = use_pandapower
-            # Update all worker threads with the new calculation engine
-            for thread_data in self.__worker_threads:
-                thread_data.calculation_instance = self.__create_calculation_instance(self.__calculation_method)
+        print(f"CalculatorThreadManager: Starting calculation for {len(model_list)} model segments using {self.__calculation_method.upper()}...")
+        start_time_total = perf_counter_ns()
 
+        with self.__thread_lock:
+            self.__threads = []
+            for model_segment in model_list:
+                calculator_instance = self._get_calculator_instance()
+                if calculator_instance:
+                    thread = CalculatorThread(model_segment, calculator_instance, self.__snapshots)
+                    self.__threads.append(thread)
+                    thread.start()
+                else:
+                    print(f"Error: Could not create calculator for method {self.__calculation_method}. Skipping segment.")
+                    # Decide how to handle failure - stop all? Continue? Mark as failed?
+                    # For now, we skip, which will likely lead to overall failure state.
 
-    def set_snapshots(self, snapshots: list[int]):
-        """
-        Set the snapshots.
-        @param snapshots list[int] 
-        """
-        for thread_data in self.__worker_threads:
-            thread_data.snapshots  = snapshots
+            if not self.__threads:
+                 print("Error: No calculation threads were started.")
+                 return False # Failed if no threads could be started
 
-        self.__snapshots = snapshots
+        # Wait for all started threads to complete
+        print(f"CalculatorThreadManager: Waiting for {len(self.__threads)} threads to finish...")
+        all_successful = True
+        for thread in self.__threads:
+            thread.join() # Wait for this thread to finish
+            if not thread.succes:
+                all_successful = False
+                # Optionally log which segment failed
+                # bus_names = [b.name for b in thread.model.buses] if thread.model and thread.model.buses else "Unknown"
+                # print(f"Calculation FAILED for segment with buses: {bus_names}")
 
-    
-    def calculate(self, model_list: list[Model]) -> None:
-        """
-        Start the calculation on the provided list of models.
-        @param model_list list[Model] Input model list
-        """
+        elapsed_time_total = (perf_counter_ns() - start_time_total) / 1000 / 1000 / 1000 # seconds
+        print(f"CalculatorThreadManager: All threads finished. Overall Success: {all_successful}. Total Time: {elapsed_time_total:.4f} s")
 
-        # Start benchmark timer
-        start_time: float = perf_counter()
+        # Optionally clear threads list after joining
+        # with self.__thread_lock:
+        #     self.__threads = []
 
-        self.__model_list = model_list
-
-        model_count: int = len(model_list)
-        worker_thread_count: int = len(self.__worker_thread_instances)
-
-        # Spawn more worker threads if needed
-        if (model_count > worker_thread_count):
-            for i in range(worker_thread_count, model_count):
-                thread: ThreadData = ThreadData()
-                thread.calculation_instance = self.__create_calculation_instance(self.__calculation_method)
-                thread.model = self.__model_list[i]
-                thread.model_id = i
-                thread.snapshots = self.__snapshots
-                thread.status = "ok"
-                thread.status_extended = "booting"
-                self.__add_thread(thread_data=thread)
-                print(f"Adding new calculation worker thread with ID: {i}")
-
-        # Send the start signal to all worker threads
-        for i in range(model_count):
-            self.__worker_threads[i].model = self.__model_list[i]
-            self.__worker_threads[i].wakeup_event.set()
-
-        # Wait until all worker threads are finished
-        for i in range(model_count):
-            self.__worker_threads[i].finished_event.wait()
-            self.__worker_threads[i].finished_event.clear()
-
-        # Stop benchmark timer
-        elapsed_time = perf_counter() - start_time
-
-        # Print results
-        engine_name = "Pandapower" if self.__use_pandapower else "PyPSA"
-        for i in range(model_count):
-            thread = self.__worker_threads[i]
-            total_time: float = thread.build_time + thread.calculation_time
-            print(f"Model: {thread.model_id+1}")
-            print(f"    Engine: {engine_name}")
-            print(f"    Method: {self.__calculation_method}")
-            print(f"    Status: [{thread.status}, {thread.status_extended}]")
-            print(f"    Build time: {thread.build_time:.3f} s")
-            print(f"    Solver time: {thread.calculation_time:.3f} s")      
-            print(f"    Total time: {total_time:.3f} s")
-        print(f"All model calculations finished in {elapsed_time:.3f} s")
-
+        return all_successful
 
     def shutdown(self) -> None:
         """
-        Destroy this CalculatorThreadManager.
-        This must be called before closing the simulation server.
+        Ensures all active threads are properly joined (waited for).
+        Call this before exiting the application or starting a new batch calculation.
         """
-        # Set global shutdown flag
-        self.__shutdown = True
+        with self.__thread_lock:
+            if not self.__threads:
+                return # No threads to shut down
 
-        # Signal all worker threads to wake up
-        for thread in self.__worker_threads:
-            thread.wakeup_event.set()
+            print(f"CalculatorThreadManager: Shutting down - joining {len(self.__threads)} active threads...")
+            active_threads = list(self.__threads) # Create copy to iterate over
+            self.__threads = [] # Clear the main list
 
-        # Close all worker threads
-        for thread in self.__worker_thread_instances:
-            thread.join()
+        # Join threads outside the lock
+        for thread in active_threads:
+            if thread.is_alive():
+                print(f"Waiting for thread {thread.name} to complete...")
+                thread.join(timeout=5.0) # Add a timeout
+                if thread.is_alive():
+                     print(f"Warning: Thread {thread.name} did not finish within timeout during shutdown.")
+            # else:
+            #    print(f"Thread {thread.name} already finished.")
 
+        print("CalculatorThreadManager: Shutdown complete.")
 
-    def __calculate_thread(self, thread: ThreadData):
-        """
-        Main program flow of a worker thread.
-        This method never exits until the shutdown flag is set.
-        @param thread ThreadData
-        """
-
-        # Keep looping until the shutdown flag is set
-        while (self.__shutdown == False):
-
-            model_id: int = thread.model_id + 1
-            export_path: str = "export/model_" + str(model_id)
-            wakeup_event: Event = thread.wakeup_event
-            finished_event: Event = thread.finished_event
-
-            # Wait until the wakeup/start signal is given
-            wakeup_event.wait()
-            wakeup_event.clear()
-
-            # Exit if the shutdown flag is set
-            if (self.__shutdown):
-                return
-
-            # Provide model and snapshot to the calculating instance and start the calculation
-            thread.calculation_instance.set_snapshots(thread.snapshots)
-            thread.calculation_instance.set_input_model(thread.model)
-            thread.calculation_instance.build_model()
-            thread.calculation_instance.calculate()
-
-            # Retrieve benchmarks from the calculating instance
-            thread.build_time: float = thread.calculation_instance.get_network_build_time()
-            thread.calculation_time: float = thread.calculation_instance.get_calculation_time()
-            thread.status: str = thread.calculation_instance.get_status()
-            thread.status_extended: str = thread.calculation_instance.get_condition()  
-
-            # Set the finished flag
-            finished_event.set()
-
-            # Export the results to external files
-            thread.calculation_instance.export_result(export_path)
-            
-        return
-    
-    
-    def __add_thread(self, thread_data: ThreadData) -> None:
-            """
-            Create a new worker thread.
-            @param thread_data ThreadData
-            """
-            self.__worker_threads.append(thread_data)
-            self.__worker_thread_instances.append(Thread(target=self.__calculate_thread, args=(thread_data, )))
-            self.__worker_thread_instances[-1].start()
