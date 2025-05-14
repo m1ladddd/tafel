@@ -1,7 +1,7 @@
 import os
 from PySide6.QtWidgets import QGraphicsPixmapItem, QGraphicsItem
 from PySide6.QtGui import QPen, QBrush, QColor, QPainter, QPixmap, QImage
-from PySide6.QtCore import Qt, QRectF
+from PySide6.QtCore import Qt, QRectF, QPointF
 
 class PowerComponent(QGraphicsPixmapItem):
     """Realistische weergave van energiecomponenten met afbeeldingen"""

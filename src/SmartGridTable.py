@@ -18,6 +18,7 @@
 # @section author_SmartgridTable Author(s)
 # - Created by Jop Merz on 01/02/2023.
 # - Modified by Jop Merz on 01/02/2023.
+# - Modified by Milad with Pandapower 03/02/2025
 ##
 
 # === PyPSA Import Verwijderd/Uitgecommentarieerd ===
@@ -51,6 +52,7 @@ from src.Section_HV import Section_HV
 from src.Section_MV import Section_MV
 from src.Section_LV import Section_LV
 from src.Section_MV_Ring import Section_MV_Ring
+from src.Scenario import Scenario
 import pandas as pd
 
 from os.path import exists
