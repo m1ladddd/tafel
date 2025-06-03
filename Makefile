@@ -41,7 +41,7 @@ test-pandapower:
 # Run integration tests
 test-integration:
 	@echo "🧪 Running integration tests..."
-	python test_refactored_app.py
+	cd test && python test_refactored_app.py
 
 # Run comprehensive tests
 test-comprehensive:
