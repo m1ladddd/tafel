@@ -6,6 +6,11 @@
 # Created by Jop Merz on 01/11/2023.
 ##
 
+# Add parent directory to path for imports
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 # Internal imports
 from src.networking.Decoder import Decoder
 

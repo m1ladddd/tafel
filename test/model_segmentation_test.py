@@ -1,12 +1,18 @@
 ##
 # @file model_segmentation_test.py
 #
-# @brief Unit test for power grid model segmentation.
+# @brief Unit test for model segmentation.
 #
-# Created by Jop Merz on 01/11/2023.
+# Created by Jop Merz on 28/10/2023.
 ##
 
+# Add parent directory to path for imports
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 # Internal imports
+from src.model.calculation.pandapower.PandapowerNetworkBuilder import PandapowerNetworkBuilder
 from src.model.Model import Model, segment_model
 from src.model.components.Bus import Bus
 from src.model.components.Line import Line

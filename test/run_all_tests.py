@@ -1,14 +1,18 @@
 #!/usr/bin/env python3
 """
-Local test pipeline runner for the Smart Grid Table application.
-Mirrors the CI pipeline for easy local testing with comprehensive coverage.
+Comprehensive Test Suite Runner for Smart Grid Table Project
+Runs all available unit tests, integration tests, and performance tests
 """
 
+# Add parent directory to path for imports
 import sys
 import os
-import subprocess
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+import unittest
 import time
-from datetime import datetime
+from contextlib import redirect_stdout, redirect_stderr
+import io
 
 
 def run_command(name: str, command: list, description: str) -> bool:

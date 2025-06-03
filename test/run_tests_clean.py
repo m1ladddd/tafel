@@ -25,7 +25,7 @@ def discover_and_run_all_tests():
     current_file = os.path.abspath(__file__)
     test_files = [f for f in test_files if f != current_file and not f.endswith('__init__.py')]
     
-    print(f"🔍 Discovered {len(test_files)} test files:")
+    print(f"Discovered {len(test_files)} test files:")
     for test_file in sorted(test_files):
         print(f"  - {os.path.basename(test_file)}")
     
@@ -51,32 +51,32 @@ def discover_and_run_all_tests():
             loaded_files += 1
             
         except Exception as e:
-            print(f"⚠️  Failed to load {os.path.basename(test_file)}: {e}")
+            print(f"Failed to load {os.path.basename(test_file)}: {e}")
     
-    print(f"\n✅ Successfully loaded {loaded_files}/{total_files} test files")
-    print(f"🧪 Total tests to run: {suite.countTestCases()}")
+    print(f"Successfully loaded {loaded_files}/{total_files} test files")
+    print(f"Total tests to run: {suite.countTestCases()}")
     
     # Run all tests
-    print(f"\n{'='*60}")
-    print("🚀 Running ALL discovered tests...")
-    print(f"{'='*60}")
+    print("=" * 60)
+    print("Running ALL discovered tests...")
+    print("=" * 60)
     
     runner = unittest.TextTestRunner(verbosity=2)
     result = runner.run(suite)
     
     # Print summary
-    print(f"\n{'='*60}")
-    print("📊 TEST EXECUTION SUMMARY")
-    print(f"{'='*60}")
-    print(f"🧪 Tests run: {result.testsRun}")
-    print(f"✅ Passed: {result.testsRun - len(result.failures) - len(result.errors)}")
-    print(f"❌ Failed: {len(result.failures)}")
-    print(f"💥 Errors: {len(result.errors)}")
+    print("=" * 60)
+    print("TEST EXECUTION SUMMARY")
+    print("=" * 60)
+    print(f"Tests run: {result.testsRun}")
+    print(f"Passed: {result.testsRun - len(result.failures) - len(result.errors)}")
+    print(f"Failed: {len(result.failures)}")
+    print(f"Errors: {len(result.errors)}")
     
     if result.wasSuccessful():
-        print("🎉 ALL TESTS PASSED!")
+        print("ALL TESTS PASSED")
     else:
-        print("⚠️  Some tests failed!")
+        print("Some tests failed")
     
     return result
 
@@ -120,4 +120,4 @@ def model_segmentation_suite():
 
 if __name__ == '__main__':
     # Run comprehensive test discovery by default
-    discover_and_run_all_tests()
+    discover_and_run_all_tests() 
