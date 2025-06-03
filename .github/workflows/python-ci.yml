@@ -61,13 +61,7 @@ jobs: # De taken die uitgevoerd moeten worden
         echo "🧪 Running Basic Integration Tests for Refactored Modules"
         cd test && python test_refactored_app.py
 
-    # Stap 8: Comprehensive Tests (Error handling, Edge cases, Performance)
-    - name: Run Comprehensive Tests
-      run: |
-        echo "🧪 Running Comprehensive Tests (Error handling, Edge cases, Performance)"
-        cd test && python test_refactored_comprehensive.py
-
-    # Stap 9: Application Smoke Test
+    # Stap 8: Application Smoke Test
     - name: Run Application Smoke Test
       run: |
         echo "🧪 Running Application Smoke Test"
@@ -89,14 +83,14 @@ jobs: # De taken die uitgevoerd moeten worden
             sys.exit(1)
         " || (echo "❌ Application smoke test timed out or failed" && exit 1)
 
-    # Stap 10: pytest Discovery (behouden van origineel)
+    # Stap 9: pytest Discovery (behouden van origineel)
     - name: Test with pytest discovery
       run: |
         echo "🧪 Running PyTest Discovery"
         # Voer pytest uit; het vindt tests automatisch
         pytest test/ -v --tb=short
         
-    # Stap 11: Test Summary Report
+    # Stap 10: Test Summary Report
     - name: Generate Test Summary
       if: always() # Run even if previous steps failed
       run: |
@@ -104,9 +98,8 @@ jobs: # De taken die uitgevoerd moeten worden
         echo "=========================="
         echo "✅ Original Unit Tests: Binary encoding, Model segmentation"
         echo "✅ Pandapower Tests: Implementation and network functionality"  
-        echo "✅ Integration Tests: Refactored modules (AppState, ConfigLoader, MQTTManager, CommandDispatcher)"
-        echo "✅ Comprehensive Tests: Error handling, edge cases, performance"
+        echo "✅ Integration Tests: Refactored modules (AppState, ConfigLoader, CommandDispatcher)"
         echo "✅ Application Smoke Test: Basic startup and imports"
         echo "✅ PyTest Discovery: All test discovery"
         echo "=========================="
-        echo "🎉 Refactored Smart Grid Table application fully tested!"
+        echo "🎉 Refactored Smart Grid Table application tested!"
