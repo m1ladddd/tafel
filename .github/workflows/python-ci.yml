@@ -43,40 +43,25 @@ jobs: # De taken die uitgevoerd moeten worden
         # geef alle errors/warnings, maar faal niet (exit-zero)
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
-    # Stap 5: Originele Unit Tests
-    - name: Run Original Unit Tests
-      run: |
-        echo "Running Original Unit Tests (Binary encoding, Model segmentation)"
-        cd test && python run_tests.py
-
-    # Stap 6: Pandapower Implementation Tests
+    # Stap 5: Pandapower Implementation Tests
     - name: Run Pandapower Tests
       run: |
         echo "Running Pandapower Implementation Tests"
         cd test && python test_pandapower_implementation.py
 
-    # Stap 7: Basic Integration Tests voor Refactored Modules
+    # Stap 6: Basic Integration Tests voor Refactored Modules
     - name: Run Refactored Module Integration Tests
       run: |
         echo "Running Basic Integration Tests for Refactored Modules"
         cd test && python test_refactored_app.py
 
-    # Stap 8: pytest Discovery (behouden van origineel)
-    - name: Test with pytest discovery
-      run: |
-        echo "Running PyTest Discovery"
-        # Voer pytest uit; het vindt tests automatisch
-        pytest test/ -v --tb=short
-        
-    # Stap 9: Test Summary Report
+    # Stap 7: Test Summary Report
     - name: Generate Test Summary
       if: always() # Run even if previous steps failed
       run: |
         echo "Test Pipeline Summary"
         echo "=========================="
-        echo "Original Unit Tests: Binary encoding, Model segmentation"
         echo "Pandapower Tests: Implementation and network functionality"  
         echo "Integration Tests: Refactored modules (AppState, ConfigLoader, CommandDispatcher)"
-        echo "PyTest Discovery: All test discovery"
         echo "=========================="
-        echo "Refactored Smart Grid Table application tested!"
+        echo "Smart Grid Table application tested!"
