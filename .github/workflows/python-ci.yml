@@ -59,7 +59,7 @@ jobs: # De taken die uitgevoerd moeten worden
     - name: Run Refactored Module Integration Tests
       run: |
         echo "🧪 Running Basic Integration Tests for Refactored Modules"
-        python test_refactored_app.py
+        cd test && python test_refactored_app.py
 
     # Stap 8: Comprehensive Tests (Error handling, Edge cases, Performance)
     - name: Run Comprehensive Tests
