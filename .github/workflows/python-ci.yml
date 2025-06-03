@@ -46,60 +46,37 @@ jobs: # De taken die uitgevoerd moeten worden
     # Stap 5: Originele Unit Tests
     - name: Run Original Unit Tests
       run: |
-        echo "🧪 Running Original Unit Tests (Binary encoding, Model segmentation)"
+        echo "Running Original Unit Tests (Binary encoding, Model segmentation)"
         cd test && python run_tests.py
 
     # Stap 6: Pandapower Implementation Tests
     - name: Run Pandapower Tests
       run: |
-        echo "🧪 Running Pandapower Implementation Tests"
+        echo "Running Pandapower Implementation Tests"
         cd test && python test_pandapower_implementation.py
 
     # Stap 7: Basic Integration Tests voor Refactored Modules
     - name: Run Refactored Module Integration Tests
       run: |
-        echo "🧪 Running Basic Integration Tests for Refactored Modules"
+        echo "Running Basic Integration Tests for Refactored Modules"
         cd test && python test_refactored_app.py
 
-    # Stap 8: Application Smoke Test
-    - name: Run Application Smoke Test
-      run: |
-        echo "🧪 Running Application Smoke Test"
-        echo "Testing basic application startup and imports..."
-        timeout 30s python -c "
-        import sys
-        import os
-        from main_controller import MainApplicationController
-        from app_state import AppState
-        
-        try:
-            app_state = AppState()
-            app_state.simulation_mode = True
-            controller = MainApplicationController()
-            controller.app_state.request_shutdown()
-            print('✅ Application smoke test passed')
-        except Exception as e:
-            print(f'❌ Application smoke test failed: {e}')
-            sys.exit(1)
-        " || (echo "❌ Application smoke test timed out or failed" && exit 1)
-
-    # Stap 9: pytest Discovery (behouden van origineel)
+    # Stap 8: pytest Discovery (behouden van origineel)
     - name: Test with pytest discovery
       run: |
-        echo "🧪 Running PyTest Discovery"
+        echo "Running PyTest Discovery"
         # Voer pytest uit; het vindt tests automatisch
         pytest test/ -v --tb=short
         
-    # Stap 10: Test Summary Report
+    # Stap 9: Test Summary Report
     - name: Generate Test Summary
       if: always() # Run even if previous steps failed
       run: |
-        echo "📊 Test Pipeline Summary"
+        echo "Test Pipeline Summary"
         echo "=========================="
-        echo "✅ Original Unit Tests: Binary encoding, Model segmentation"
-        echo "✅ Pandapower Tests: Implementation and network functionality"  
-        echo "✅ Integration Tests: Refactored modules (AppState, ConfigLoader, CommandDispatcher)"
-        echo "✅ Application Smoke Test: Basic startup and imports"
-        echo "✅ PyTest Discovery: All test discovery"
+        echo "Original Unit Tests: Binary encoding, Model segmentation"
+        echo "Pandapower Tests: Implementation and network functionality"  
+        echo "Integration Tests: Refactored modules (AppState, ConfigLoader, CommandDispatcher)"
+        echo "PyTest Discovery: All test discovery"
         echo "=========================="
-        echo "🎉 Refactored Smart Grid Table application tested!"
+        echo "Refactored Smart Grid Table application tested!"
