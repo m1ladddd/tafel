@@ -349,11 +349,12 @@ class SmartGridTable:
 
     def modules_reload(self):
         """! Reload module instances in all sections based on the current scenario. """
-        print(f"Reloading modules for scenario: {self.__current_scenario.name} (Static: {self.__static})")
         # Ensure a scenario is actually loaded
         if not self.__current_scenario:
              print("Error: Cannot reload modules, no current scenario set.")
              return
+             
+        print(f"Reloading modules for scenario: {self.__current_scenario.get_name()} (Static: {self.__static})")
 
         for section in self.__table_sections:
             section.set_scenario(self.__current_scenario) # Pass the Scenario object
@@ -508,7 +509,7 @@ class SmartGridTable:
         if not config_instance:
              print("Error: Attempted to set None as MQTT config.")
              return
-        print(f"Setting MQTT config '{config_instance.name}' for all sections.")
+        print(f"Setting MQTT config '{config_instance.get_name()}' for all sections.")
         for section in self.__table_sections:
             section.mqtt_set_config(config_instance)
 
@@ -961,33 +962,40 @@ class SmartGridTable:
                  # Add transformers
                  if hasattr(section.model, 'transformers'):
                       for transformer in section.model.transformers:
-                          # Update transformer connections based on placed modules (links)
-                           for link in self.__transformer_links:
-                                if link.RFID_table == section.name:
-                                     # Check if a module is placed at the transformer link location
-                                     module_placed = False
-                                     for platform in section.platforms:
-                                          if platform.RFID_location == link.RFID and platform.module is not None:
-                                               module_placed = True
-                                               break
-                                     if module_placed:
-                                          # Connect transformer buses based on link if module is present
-                                          # This logic seems complex and potentially error-prone, ensure it's correct
-                                          # Assuming transformer bus0 is HV, bus1 is LV/MV
-                                          # Link bus0 connects to transformer bus0 (HV), link bus1 connects to transformer bus1 (LV/MV)?
-                                          # Or does the link define the connection points entirely?
-                                          # Let's assume link defines EXTERNAL buses, transformer defines INTERNAL buses initially
-                                          # Need clear definition of how TransformerLink maps buses
-                                          # Simpler approach: Assume transformer initially defined with section buses,
-                                          # then add inter-section lines later. Modify transformer logic if needed.
+                          # Find the specific link for this transformer by matching platform/module placement
+                          transformer_connected = False
+                          
+                          # Get the RFID tag from the transformer name (e.g., "Table1_1071746625_Transformer0" -> "1071746625")
+                          transformer_rfid = None
+                          name_parts = transformer.name.split("_")
+                          if len(name_parts) >= 2:
+                              transformer_rfid = name_parts[1]  # Extract RFID from name
+                          
+                          if transformer_rfid:
+                              # Find the platform that has this specific transformer module
+                              platform_location = None
+                              for platform in section.platforms:
+                                  if platform.module is not None and hasattr(platform.module, 'RFID_tag'):
+                                      if platform.module.RFID_tag == transformer_rfid:
+                                          platform_location = platform.RFID_location
+                                          break
+                              
+                              # Now find the matching TransformerLink for this specific platform location
+                              if platform_location is not None:
+                                  for link in self.__transformer_links:
+                                      if link.RFID_table == section.name and link.RFID == platform_location:
+                                          # Set transformer bus connections based on this specific TransformerLink
+                                          transformer.bus0 = link.bus0  # HV side
+                                          transformer.bus1 = link.bus1  # LV side
+                                          transformer_connected = True
+                                          print(f"DEBUG: Connected transformer {transformer.name} (RFID: {transformer_rfid}, Platform: {platform_location}) - bus0: {transformer.bus0}, bus1: {transformer.bus1}")
+                                          break
 
-                                          # --- Revised Logic Idea: Add Transformers first, then inter-section lines ---
-                                          # This avoids modifying transformer buses here if links are represented as lines.
-                                          pass # Postpone transformer connection logic
-
-
-                           # Add transformer AFTER potentially modifying buses (or handle via lines)
-                           model.add_transformer(transformer)
+                          # Only add transformer if it has valid bus connections
+                          if transformer_connected and transformer.bus0 and transformer.bus1:
+                               model.add_transformer(transformer)
+                          else:
+                               print(f"DEBUG: Skipping transformer {transformer.name} - no valid connections or module not placed")
 
 
             else:

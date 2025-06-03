@@ -1,7 +1,27 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
 *.pyc
+
+# Virtual environments
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+
+# macOS
+.DS_Store
+
+# Package directories
+input_handling/__pycache__/
+mqtt_services/__pycache__/
+
 html/
 latex/
-.vscode/
 smart_grid_table.egg-info/
 src.egg-info/
 pyvenv.cfg
@@ -14,4 +34,3 @@ build/
 include/
 share/
 export/
-venv/

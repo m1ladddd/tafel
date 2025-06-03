@@ -94,6 +94,7 @@ def create_mock_sections():
 def simulate_table_connection():
     """
     This function creates a mock connection to simulate that table sections are connected.
+    Also places some test modules automatically in simulation mode.
     """
     print("────────────────────────────────────────────────────────────────")
     print("──────── Simulating connection to SmartGridTable sections ──────")
@@ -101,3 +102,43 @@ def simulate_table_connection():
     
     # Return a list of simulated section IDs
     return [1, 2, 3, 4, 5, 6]
+
+def simulate_rfid_modules():
+    """
+    Simulate RFID modules being placed on the table for testing.
+    This mimics what would happen when physical modules are placed.
+    """
+    import time
+    from threading import Thread
+    
+    def place_test_modules():
+        # Wait for the system to fully initialize
+        time.sleep(5)
+        
+        print("────────────────────────────────────────────────────────────────")
+        print("────────── Simulating RFID module placement for testing ───────")
+        print("────────────────────────────────────────────────────────────────")
+        
+        # Real RFID tags from the default scenario that we can use for testing
+        test_modules = [
+            {"rfid": "1071771887", "name": "Coal powerplant", "table": "Table1", "position": 0},           # HV Generator
+            {"rfid": "1071966141", "name": "Gas powerplant", "table": "Table1", "position": 1},            # HV Generator  
+            {"rfid": "1071766506", "name": "Solar farm small 2", "table": "Table3", "position": 0},        # MV Generator
+            {"rfid": "643269249", "name": "Solar farm small 3", "table": "Table3", "position": 1},         # MV Generator
+            {"rfid": "1842809804", "name": "In/export", "table": "Table4", "position": 0},                 # HV Generator (large capacity)
+            {"rfid": "569209056", "name": "Offshore Wind", "table": "Table5", "position": 0},              # HV Generator
+        ]
+        
+        print("🔧 Simulating module placement via RFID:")
+        for module in test_modules:
+            print(f"   📍 {module['name']} ({module['rfid']}) -> {module['table']} position {module['position']}")
+            
+        # In a real simulation, we would send MQTT messages to simulate RFID detection
+        # For now, just notify that modules should be available
+        print("💡 Note: For full testing, manual module placement via MQTT may be needed")
+        print("   Example command: place module RFID=1071771887 on Table1 position 0")
+        print("────────────────────────────────────────────────────────────────")
+    
+    # Start module placement in background thread
+    module_thread = Thread(target=place_test_modules, daemon=True)  
+    module_thread.start()

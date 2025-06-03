@@ -452,6 +452,7 @@ class PandapowerNetworkBuilder (CalculatorThreadInterface):
                          i0_percent=0.5, # Rough estimation of no-load current
                          name=trafo.name
                     )
+                    print(f"DEBUG: Created transformer {trafo.name} using parameter fallback")
                     trafo_added = True
                  except Exception as e_param:
                     print(f"Error adding transformer {trafo.name} with parameters: {e_param}")
