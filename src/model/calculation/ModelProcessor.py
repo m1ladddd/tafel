@@ -75,10 +75,11 @@ class ModelProcessor (ModelProcessorInterface):
         return self.__input_model
 
 
-    def selective_calculate(self) -> None:
+    def selective_calculate(self) -> bool:
         """
         Segment the raw input model into multiple models.
         Compares the models with the previous calculated ones to check which need a recalculation.
+        @return bool True if all calculations were successful, False otherwise
         """
 
         # Network segmentation.
@@ -115,13 +116,15 @@ class ModelProcessor (ModelProcessorInterface):
         print(f"Models to calculate: {len(model_list)}")
 
         # Start multithreaded model calculation.
-        self.__calculation_thread_manager.calculate(model_list)
+        calculation_success = self.__calculation_thread_manager.calculate(model_list)
+        return calculation_success
 
 
-    def force_calculate(self) -> None:
+    def force_calculate(self) -> bool:
         """
         Segments the raw input model into multiple models.
         Start the calcualtion for each segmented model.
+        @return bool True if all calculations were successful, False otherwise
         """
 
         ## Network segmentation.
@@ -131,10 +134,12 @@ class ModelProcessor (ModelProcessorInterface):
         print(f"Models to calculate: {len(self.__segmented_model_list)}")
 
         ## Start multithreaded model calculation.
-        self.__calculation_thread_manager.calculate(self.__segmented_model_list)
+        calculation_success = self.__calculation_thread_manager.calculate(self.__segmented_model_list)
 
         ## Save a copy so it can be compared next time.
         self.__previous_segmented_model_list = deepcopy(self.__segmented_model_list)
+        
+        return calculation_success
 
 
     def shutdown(self) -> None:

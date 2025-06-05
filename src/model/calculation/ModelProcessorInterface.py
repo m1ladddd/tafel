@@ -57,18 +57,20 @@ class ModelProcessorInterface:
         pass
 
     @abstractmethod
-    def force_calculate(self) -> None:
+    def force_calculate(self) -> bool:
         """! 
         Interface method.
         Recalcualtes every power grid model.
+        @return bool True if all calculations were successful, False otherwise
         """
         pass
 
     @abstractmethod
-    def selective_calculate(self) -> None:
+    def selective_calculate(self) -> bool:
         """! 
         Interface method.
         Only recalcualtes the power grid models which have changed.
+        @return bool True if all calculations were successful, False otherwise
         """
         pass
     
