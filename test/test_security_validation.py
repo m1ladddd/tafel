@@ -329,7 +329,7 @@ class TestDataIntegrity(unittest.TestCase):
 
 def run_security_tests():
     """Run all security tests."""
-    print("🔒 Running Security and Validation Tests")
+    print("Running Security and Validation Tests")
     print("=" * 80)
     
     # Create test suite
@@ -355,10 +355,10 @@ def run_security_tests():
     
     print("\n" + "=" * 80)
     if result.wasSuccessful():
-        print("✅ ALL SECURITY TESTS PASSED!")
+        print("ALL SECURITY TESTS PASSED!")
         return 0
     else:
-        print("❌ Some security tests failed.")
+        print("Some security tests failed.")
         print(f"Failures: {len(result.failures)}")
         print(f"Errors: {len(result.errors)}")
         return 1

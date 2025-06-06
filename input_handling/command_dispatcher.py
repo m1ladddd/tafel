@@ -6,6 +6,20 @@ Handles console commands, GUI MQTT messages, prototype messages, and Jupyter com
 import json
 from typing import Dict, List, Any, Optional, Callable
 
+# Import validation utilities
+from utils.validation import (
+    validate_table_section_name,
+    validate_module_id,
+    validate_calculation_mode,
+    validate_direction,
+    validate_voltage_level,
+    validate_scenario_name,
+    validate_command_arguments,
+    sanitize_user_input,
+    validate_mqtt_message_type,
+    InputValidator
+)
+
 
 class CommandDispatcher:
     """Dispatches commands from various sources to appropriate handlers."""
@@ -15,6 +29,9 @@ class CommandDispatcher:
         self.table = smart_grid_table
         self.config_loader = config_loader
         self.mqtt_manager = mqtt_manager
+        
+        # Input validator for security
+        self.validator = InputValidator(strict_mode=True)
         
         # Command registries
         self._console_commands: Dict[str, Callable] = {}
@@ -80,6 +97,8 @@ class CommandDispatcher:
     
     def dispatch_console_command(self, command_str: str):
         """Dispatch a console command string to the appropriate handler."""
+        # Sanitize input first
+        command_str = sanitize_user_input(command_str, max_length=500)
         parts = command_str.split()
         if not parts:
             return
@@ -90,6 +109,12 @@ class CommandDispatcher:
             if command_key in self._console_commands:
                 handler = self._console_commands[command_key]
                 args = parts[i:]
+                
+                # Validate command arguments
+                if not validate_command_arguments(command_key.replace(" ", "_"), args):
+                    print(f"Error: Invalid arguments for command '{command_key}'")
+                    return
+                
                 try:
                     handler(*args)
                 except TypeError as e:
@@ -374,11 +399,17 @@ class CommandDispatcher:
         """Set calculation mode."""
         if len(args) >= 1:
             new_mode = args[0].lower()
+            
+            # Validate mode
+            if not validate_calculation_mode(new_mode):
+                print(f"Invalid mode '{new_mode}'. Valid modes: optimize, lopf, lpf, pf")
+                return
+                
             if self.app_state.set_mode(new_mode):
                 self.table.set_calculation_method(new_mode)
                 print(f"Setting mode to {new_mode.upper()} (using Pandapower backend)")
             else:
-                print(f"Invalid mode '{new_mode}'. Valid modes: optimize, lopf, lpf, pf")
+                print(f"Failed to set mode to '{new_mode}'")
         else:
             print("Usage: mode set [optimize|lopf|lpf|pf]")
             
@@ -420,6 +451,11 @@ class CommandDispatcher:
         """Dispatch a UI MQTT message to the appropriate handler."""
         msg_type = message_dict.get('type')
         payload = message_dict.get('payload', {})
+        
+        # Validate message type
+        if not validate_mqtt_message_type(msg_type):
+            print(f"Invalid UI message type: {msg_type}")
+            return
         
         handler = self._ui_message_handlers.get(msg_type)
         if handler:

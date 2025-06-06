@@ -15,13 +15,13 @@ def run_pandapower_flow(net):
     """Runs pandapower power flow and handles convergence errors."""
     try:
         pp.runpp(net)
-        print("✅ Power flow succesvol uitgevoerd!")
+        print("Power flow succesvol uitgevoerd!")
         return True
     except pp.LoadflowNotConverged:
-        print("⚠️ Power flow did not converge.")
+        print("Power flow did not converge.")
         return False
     except Exception as e:
-        print(f"⚠️ An error occurred during power flow: {e}")
+        print(f"An error occurred during power flow: {e}")
         return False
 
 def test_basic_network():
@@ -268,13 +268,13 @@ def test_known_example():
     assert verwacht_minimum <= lijn_vermogen <= verwacht_maximum, \
         f"Lijn moet ~{verwacht_minimum}-{verwacht_maximum} MW transporteren (incl. verliezen), maar transporteert {lijn_vermogen:.2f} MW"
 
-    print("✅ Bekende waarden test geslaagd!")
+    print("Bekende waarden test geslaagd!")
 
 
 # Run alle tests wanneer dit script direct wordt uitgevoerd
 if __name__ == "__main__":
-    print("🧪 Uitvoeren van tests voor PandapowerNetworkBuilder:")
+    print("Uitvoeren van tests voor PandapowerNetworkBuilder:")
     test_basic_network()
     test_complex_network()
     test_known_example()
-    print("\n✅ Alle tests geslaagd!")
+    print("\nAlle tests geslaagd!")

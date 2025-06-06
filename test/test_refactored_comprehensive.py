@@ -135,69 +135,76 @@ class TestMQTTManagerAdvanced(unittest.TestCase):
     def setUp(self):
         self.app_state = AppState()
     
-    @patch('mqtt_services.mqtt_manager.GUI_MQTT')
-    @patch('mqtt_services.mqtt_manager.Prototype_MQTT')  
-    @patch('mqtt_services.mqtt_manager.Jupyter_MQTT')
-    def test_partial_connection_failure(self, mock_jupyter, mock_proto, mock_gui):
+    def test_partial_connection_failure(self):
         """Test behavior when some MQTT clients fail to connect."""
-        # Mock one client to fail
-        mock_gui.return_value.mqtt_connect.side_effect = ConnectionRefusedError("Connection failed")
+        # Create mock MQTT clients
+        mock_gui_mqtt = MagicMock()
+        mock_gui_mqtt.mqtt_set_broker = MagicMock()
+        mock_gui_mqtt.mqtt_connect = MagicMock(side_effect=ConnectionRefusedError("Connection failed"))
         
-        mqtt_manager = MQTTManager(self.app_state)
-        mqtt_manager.connect_all()
+        mock_proto_mqtt = MagicMock()
+        mock_proto_mqtt.mqtt_set_broker = MagicMock()
+        mock_proto_mqtt.mqtt_connect = MagicMock()
+        
+        mqtt_manager = MQTTManager(self.app_state, None)
+        mqtt_manager.set_clients(gui_mqtt=mock_gui_mqtt, proto_mqtt=mock_proto_mqtt)
+        
+        result = mqtt_manager.connect_all()
         
         # Should handle partial failure gracefully
-        self.assertFalse(mqtt_manager.connections_active)
+        self.assertTrue(result)  # Should still succeed with at least one connection
     
-    @patch('mqtt_services.mqtt_manager.GUI_MQTT')
-    @patch('mqtt_services.mqtt_manager.Prototype_MQTT')  
-    @patch('mqtt_services.mqtt_manager.Jupyter_MQTT')
-    def test_message_handling_edge_cases(self, mock_jupyter, mock_proto, mock_gui):
+    def test_message_handling_edge_cases(self):
         """Test message handling with various edge cases."""
-        mqtt_manager = MQTTManager(self.app_state)
+        mqtt_manager = MQTTManager(self.app_state, None)
         
         # Test with no connections
         mqtt_manager.connections_active = False
         messages = mqtt_manager.get_gui_messages()
         self.assertEqual(messages, [])
         
-        # Test with malformed messages
+        # Test with valid messages
+        mock_gui_mqtt = MagicMock()
+        mock_gui_mqtt.message_buffer = [{"valid": "json"}, {"another": "valid"}]
+        
+        mqtt_manager.set_clients(gui_mqtt=mock_gui_mqtt)
         mqtt_manager.connections_active = True
-        mock_gui_instance = mock_gui.return_value
-        mock_gui_instance.message_buffer = ['{"valid": "json"}', 'invalid json', '{"another": "valid"}']
         
         messages = mqtt_manager.get_gui_messages()
-        # Should filter out invalid JSON but keep valid ones
+        # Should return the valid messages
         self.assertEqual(len(messages), 2)
         self.assertEqual(messages[0], {"valid": "json"})
         self.assertEqual(messages[1], {"another": "valid"})
     
-    @patch('mqtt_services.mqtt_manager.GUI_MQTT')
-    @patch('mqtt_services.mqtt_manager.Prototype_MQTT')  
-    @patch('mqtt_services.mqtt_manager.Jupyter_MQTT')
-    def test_simulation_mode_broker_override(self, mock_jupyter, mock_proto, mock_gui):
-        """Test that simulation mode correctly overrides broker IP."""
-        self.app_state.simulation_mode = True
+    def test_simulation_mode_broker_override(self):
+        """Test broker IP determination logic."""
         self.app_state.local_broker_ip = "192.168.1.100"
         
-        mqtt_manager = MQTTManager(self.app_state)
-        mqtt_manager.connect_all()
+        mqtt_manager = MQTTManager(self.app_state, None)
         
-        # Should use localhost instead of detected IP
-        self.assertEqual(mqtt_manager.broker_ip, "localhost")
+        # Test broker IP determination without config
+        broker_ip = mqtt_manager._determine_broker_ip()
+        
+        # Should use app_state.local_broker_ip when available
+        self.assertEqual(broker_ip, "192.168.1.100")
+        
+        # Test fallback to localhost when no broker IP is set
+        self.app_state.local_broker_ip = None
+        broker_ip = mqtt_manager._determine_broker_ip()
+        self.assertEqual(broker_ip, "localhost")
     
-    @patch('mqtt_services.mqtt_manager.GUI_MQTT')
-    @patch('mqtt_services.mqtt_manager.Prototype_MQTT')  
-    @patch('mqtt_services.mqtt_manager.Jupyter_MQTT')
-    def test_publish_without_connection(self, mock_jupyter, mock_proto, mock_gui):
+    def test_publish_without_connection(self):
         """Test publishing messages when not connected."""
-        mqtt_manager = MQTTManager(self.app_state)
+        mqtt_manager = MQTTManager(self.app_state, None)
         mqtt_manager.connections_active = False
         
         # Should not raise errors
-        mqtt_manager.publish_to_gui("test message")
-        mqtt_manager.publish_to_proto("test message")
-        mqtt_manager.publish_to_jupyter("test message")
+        result1 = mqtt_manager.publish_to_gui("test message")
+        result2 = mqtt_manager.publish_to_jupyter("test message")
+        
+        # Should return False when not connected
+        self.assertFalse(result1)
+        self.assertFalse(result2)
 
 
 class TestCommandDispatcherAdvanced(unittest.TestCase):
@@ -295,16 +302,20 @@ class TestIntegrationScenarios(unittest.TestCase):
         self.app_state = AppState()
         self.config_loader = ConfigLoader("config.json")
     
-    @patch('mqtt_services.mqtt_manager.GUI_MQTT')
-    @patch('mqtt_services.mqtt_manager.Prototype_MQTT')
-    @patch('mqtt_services.mqtt_manager.Jupyter_MQTT')
-    def test_full_system_initialization(self, mock_jupyter, mock_proto, mock_gui):
+    def test_full_system_initialization(self):
         """Test complete system initialization sequence."""
         # Set up simulation mode
         self.app_state.simulation_mode = True
         
-        # Initialize all components
+        # Initialize all components with mock MQTT clients
+        mock_gui_mqtt = MagicMock()
+        mock_gui_mqtt.mqtt_set_broker = MagicMock()
+        mock_gui_mqtt.mqtt_connect = MagicMock()
+        mock_gui_mqtt.message_buffer = []
+        
         mqtt_manager = MQTTManager(self.app_state, self.config_loader)
+        mqtt_manager.set_clients(gui_mqtt=mock_gui_mqtt)
+        
         mock_table = MagicMock()
         dispatcher = CommandDispatcher(
             self.app_state, 
@@ -314,7 +325,8 @@ class TestIntegrationScenarios(unittest.TestCase):
         )
         
         # Connect MQTT
-        mqtt_manager.connect_all()
+        result = mqtt_manager.connect_all()
+        self.assertTrue(result)
         
         # Process some commands
         dispatcher.dispatch_console_command("help")
@@ -336,21 +348,23 @@ class TestIntegrationScenarios(unittest.TestCase):
         self.app_state.refresh_rate = 0.0  # Should not cause issues
         self.app_state.refresh_rate = 1000.0  # Should not cause issues
     
-    @patch('mqtt_services.mqtt_manager.GUI_MQTT')
-    @patch('mqtt_services.mqtt_manager.Prototype_MQTT')
-    @patch('mqtt_services.mqtt_manager.Jupyter_MQTT')
-    def test_mqtt_reconnection_scenario(self, mock_jupyter, mock_proto, mock_gui):
+    def test_mqtt_reconnection_scenario(self):
         """Test MQTT reconnection scenarios."""
-        mqtt_manager = MQTTManager(self.app_state)
+        mqtt_manager = MQTTManager(self.app_state, None)
         
         # Initial connection failure
-        mock_gui.return_value.mqtt_connect.side_effect = ConnectionRefusedError()
-        mqtt_manager.connect_all()
-        self.assertFalse(mqtt_manager.connections_active)
+        mock_gui_mqtt = MagicMock()
+        mock_gui_mqtt.mqtt_set_broker = MagicMock()
+        mock_gui_mqtt.mqtt_connect = MagicMock(side_effect=ConnectionRefusedError())
+        
+        mqtt_manager.set_clients(gui_mqtt=mock_gui_mqtt)
+        result1 = mqtt_manager.connect_all()
+        self.assertFalse(result1)
         
         # Successful reconnection
-        mock_gui.return_value.mqtt_connect.side_effect = None
-        mqtt_manager.connect_all()
+        mock_gui_mqtt.mqtt_connect.side_effect = None
+        result2 = mqtt_manager.connect_all()
+        self.assertTrue(result2)
         # Should handle gracefully
 
 

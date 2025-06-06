@@ -66,11 +66,13 @@ class TestPandapowerImplementation(unittest.TestCase):
                  self.assertEqual(bus_table.name.iloc[0], "testbus")
                  self.assertEqual(bus_table.vn_kv.iloc[0], 110.0)
 
-            # CORRECTION: Controleer of er GEEN ext_grid is, want de builder voegt die niet meer automatisch toe.
+            # CORRECTION: De builder voegt nu WEL automatisch een ext_grid toe voor stabiliteit
             ext_grid_table = pp_model.get('ext_grid', pd.DataFrame())
-            self.assertTrue(ext_grid_table.empty, "Builder should NOT automatically add ext_grid")
+            self.assertFalse(ext_grid_table.empty, "Builder should automatically add ext_grid for stability")
+            if not ext_grid_table.empty:
+                print(f"Ext_grid details:\n{ext_grid_table}")
 
-            print("✅ Pandapower Builder test geslaagd (check op ext_grid aangepast).")
+            print("PASSED: Pandapower Builder test geslaagd (builder voegt automatisch ext_grid toe).")
 
         except Exception as e:
             self.fail(f"Fout tijdens het bouwen van het model: {e}")
@@ -116,7 +118,7 @@ class TestPandapowerImplementation(unittest.TestCase):
            if not res_bus_table.empty and 'vm_pu' in res_bus_table.columns:
                 self.assertAlmostEqual(res_bus_table.vm_pu.loc[bus2_idx], 1.0, delta=0.1, msg="Voltage at bus2 should be close to 1.0 pu")
 
-           print("✅ Directe Pandapower test geslaagd.")
+           print("PASSED: Directe Pandapower test geslaagd.")
 
        except Exception as e:
             self.fail(f"Fout tijdens directe pandapower test: {e}")

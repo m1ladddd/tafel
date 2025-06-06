@@ -16,28 +16,28 @@ try:
     from app_state import AppState
     APP_STATE_AVAILABLE = True
 except ImportError:
-    print("⚠️  AppState module not available")
+    print("AppState module not available")
     APP_STATE_AVAILABLE = False
 
 try:
     from config_loader import ConfigLoader
     CONFIG_LOADER_AVAILABLE = True
 except ImportError:
-    print("⚠️  ConfigLoader module not available")
+    print("ConfigLoader module not available")
     CONFIG_LOADER_AVAILABLE = False
 
 try:
     from mqtt_services.mqtt_manager import MQTTManager
     MQTT_MANAGER_AVAILABLE = True
 except ImportError:
-    print("⚠️  MQTTManager module not available")
+    print("MQTTManager module not available")
     MQTT_MANAGER_AVAILABLE = False
 
 try:
     from input_handling.command_dispatcher import CommandDispatcher
     COMMAND_DISPATCHER_AVAILABLE = True
 except ImportError:
-    print("⚠️  CommandDispatcher module not available")
+    print("CommandDispatcher module not available")
     COMMAND_DISPATCHER_AVAILABLE = False
 
 
@@ -65,16 +65,15 @@ class TestRefactoredModules(unittest.TestCase):
             self.assertTrue(consumed)
             self.assertFalse(app_state.force_update)  # Should be reset
             
-            print("✅ AppState test passed")
+            print("PASSED: AppState test")
         else:
-            print("⚠️  AppState test skipped")
+            print("SKIPPED: AppState test")
     
     def test_config_loader_functionality(self):
         """Test ConfigLoader functionality."""
         print("\n=== Testing ConfigLoader ===")
         
         if CONFIG_LOADER_AVAILABLE:
-            # This should work since config.json exists (adjust path for test directory)
             config_loader = ConfigLoader("../config.json")
             
             # Test that it loaded something (corrected attribute name)
@@ -83,34 +82,58 @@ class TestRefactoredModules(unittest.TestCase):
             # Test GUI remap loading
             self.assertEqual(len(config_loader.gui_line_remaps), 6)
             
-            print("✅ ConfigLoader test passed")
+            print("PASSED: ConfigLoader test")
         else:
-            print("⚠️  ConfigLoader test skipped")
+            print("SKIPPED: ConfigLoader test")
     
     def test_mqtt_manager_functionality(self):
         """Test MQTTManager functionality with mocked MQTT clients."""
         print("\n=== Testing MQTTManager ===")
         
         if MQTT_MANAGER_AVAILABLE and APP_STATE_AVAILABLE:
-            with patch('mqtt_services.mqtt_manager.GUI_MQTT'), \
-                 patch('mqtt_services.mqtt_manager.Prototype_MQTT'), \
-                 patch('mqtt_services.mqtt_manager.Jupyter_MQTT'):
-                
-                app_state = AppState()
-                app_state.simulation_mode = True
-                
-                mqtt_manager = MQTTManager(app_state)
-                
-                # Test connection (should not crash with mocked clients)
-                mqtt_manager.connect_all()
-                
-                # Test message retrieval (empty with mocked clients)
-                gui_messages = mqtt_manager.get_gui_messages()
-                self.assertIsInstance(gui_messages, list)
-                
-                print("✅ MQTTManager test passed")
+            # Create mock MQTT clients with proper message buffers
+            mock_gui_mqtt = MagicMock()
+            mock_gui_mqtt.message_buffer = []
+            mock_gui_mqtt.mqtt_set_broker = MagicMock()
+            mock_gui_mqtt.mqtt_connect = MagicMock()
+            
+            mock_proto_mqtt = MagicMock()
+            mock_proto_mqtt.message_buffer = []
+            mock_proto_mqtt.mqtt_set_broker = MagicMock()
+            mock_proto_mqtt.mqtt_connect = MagicMock()
+            
+            mock_jupyter_mqtt = MagicMock()
+            mock_jupyter_mqtt.message_buffer = []
+            mock_jupyter_mqtt.mqtt_set_broker = MagicMock()
+            mock_jupyter_mqtt.mqtt_connect = MagicMock()
+            
+            app_state = AppState()
+            config_loader = ConfigLoader("../config.json") if CONFIG_LOADER_AVAILABLE else None
+            
+            mqtt_manager = MQTTManager(app_state, config_loader)
+            
+            # Set mock clients
+            mqtt_manager.set_clients(
+                gui_mqtt=mock_gui_mqtt,
+                proto_mqtt=mock_proto_mqtt,
+                jupyter_mqtt=mock_jupyter_mqtt
+            )
+            
+            # Test connection (should not crash with mocked clients)
+            result = mqtt_manager.connect_all()
+            self.assertIsInstance(result, bool)
+            
+            # Test message retrieval (empty with mocked clients)
+            gui_messages = mqtt_manager.get_gui_messages()
+            self.assertIsInstance(gui_messages, list)
+            
+            # Test connection status
+            status = mqtt_manager.get_connection_status()
+            self.assertIsInstance(status, dict)
+            
+            print("PASSED: MQTTManager test")
         else:
-            print("⚠️  MQTTManager test skipped")
+            print("SKIPPED: MQTTManager test")
     
     def test_command_dispatcher_basic(self):
         """Test CommandDispatcher basic functionality."""
@@ -138,20 +161,20 @@ class TestRefactoredModules(unittest.TestCase):
             dispatcher.dispatch_console_command("mode set pf")
             self.assertEqual(app_state.current_mode, "pf")
             
-            print("✅ CommandDispatcher test passed")
+            print("PASSED: CommandDispatcher test")
         else:
-            print("⚠️  CommandDispatcher test skipped")
+            print("SKIPPED: CommandDispatcher test")
 
 
 def run_integration_tests():
     """Run integration tests for refactored modules."""
-    print("🧪 Running Integration Tests for Refactored Modules")
+    print("Running Integration Tests for Refactored Modules")
     print("=" * 60)
     
     unittest.main(verbosity=2, exit=False)
     
     print("\n" + "=" * 60)
-    print("✅ All integration tests completed successfully!")
+    print("All integration tests completed successfully!")
 
 
 if __name__ == "__main__":

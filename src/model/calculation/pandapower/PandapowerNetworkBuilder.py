@@ -734,3 +734,201 @@ class PandapowerNetworkBuilder (CalculatorThreadInterface):
         """
         print(f"Info: PandaPower builder received set_calculation_method('{method}'). Specific calculators should implement relevant logic.")
         pass
+
+    # --- Public API Methods for Testing ---
+    
+    def add_bus(self, name: str, vn_kv: float, **kwargs) -> None:
+        """
+        Public method to add a single bus to the PandaPower model.
+        Used by tests and external interfaces.
+        
+        @param name: Bus name
+        @param vn_kv: Nominal voltage in kV
+        @param kwargs: Additional bus parameters (unused for now)
+        """
+        if self._pandapower_model is None:
+            self._pandapower_model = pp.create_empty_network()
+        
+        try:
+            pp.create_bus(self._pandapower_model, name=name, vn_kv=vn_kv)
+            print(f"Added bus: {name} ({vn_kv} kV)")
+        except Exception as e:
+            print(f"Error adding bus {name}: {e}")
+
+    def add_line(self, from_bus=None, to_bus=None, name: str = None, length_km: float = 1.0, 
+                std_type: str = None, **kwargs) -> None:
+        """
+        Public method to add a single line to the PandaPower model.
+        Used by tests and external interfaces.
+        
+        @param from_bus: From bus name or index
+        @param to_bus: To bus name or index
+        @param name: Line name (optional)
+        @param length_km: Length in km
+        @param std_type: Standard line type
+        @param kwargs: Additional line parameters
+        """
+        if self._pandapower_model is None:
+            self._pandapower_model = pp.create_empty_network()
+        
+        # Handle bus indices (can be int or str)
+        if isinstance(from_bus, int):
+            from_bus_idx = from_bus
+        else:
+            from_bus_idx = self.__get_bus_index(from_bus)
+        
+        if isinstance(to_bus, int):
+            to_bus_idx = to_bus
+        else:
+            to_bus_idx = self.__get_bus_index(to_bus)
+        
+        if from_bus_idx is None or to_bus_idx is None:
+            print(f"Error: Cannot add line {name}, buses not found")
+            return
+        
+        # Generate name if not provided
+        if name is None:
+            name = f"Line_{from_bus_idx}_{to_bus_idx}"
+        
+        try:
+            if std_type:
+                pp.create_line(self._pandapower_model, from_bus=from_bus_idx, to_bus=to_bus_idx,
+                              length_km=length_km, std_type=std_type, name=name)
+            else:
+                # Use default parameters
+                r_ohm_per_km = kwargs.get('r_ohm_per_km', 0.1)
+                x_ohm_per_km = kwargs.get('x_ohm_per_km', 0.1)
+                c_nf_per_km = kwargs.get('c_nf_per_km', 10)
+                max_i_ka = kwargs.get('max_i_ka', 1.0)
+                
+                pp.create_line_from_parameters(
+                    self._pandapower_model, from_bus=from_bus_idx, to_bus=to_bus_idx,
+                    length_km=length_km, r_ohm_per_km=r_ohm_per_km, 
+                    x_ohm_per_km=x_ohm_per_km, c_nf_per_km=c_nf_per_km,
+                    max_i_ka=max_i_ka, name=name
+                )
+            print(f"Added line: {name}")
+        except Exception as e:
+            print(f"Error adding line {name}: {e}")
+
+    def add_generator(self, bus=None, name: str = None, p_mw: float = 0.0, q_mvar: float = 0.0, 
+                     vm_pu: float = 1.0, **kwargs) -> None:
+        """
+        Public method to add a single generator to the PandaPower model.
+        Creates both sgen and gen for compatibility with tests.
+        
+        @param bus: Bus name or index where generator is connected
+        @param name: Generator name (optional)
+        @param p_mw: Active power in MW
+        @param q_mvar: Reactive power in Mvar
+        @param vm_pu: Voltage magnitude in per unit
+        @param kwargs: Additional generator parameters
+        """
+        if self._pandapower_model is None:
+            self._pandapower_model = pp.create_empty_network()
+        
+        # Handle bus index (can be int or str)
+        if isinstance(bus, int):
+            bus_idx = bus
+        else:
+            bus_idx = self.__get_bus_index(bus)
+        
+        if bus_idx is None:
+            print(f"Error: Cannot add generator {name}, bus {bus} not found")
+            return
+        
+        # Generate name if not provided
+        if name is None:
+            name = f"Gen_{bus_idx}"
+        
+        try:
+            # Add as conventional generator (gen) for test compatibility
+            pp.create_gen(self._pandapower_model, bus=bus_idx, p_mw=p_mw, 
+                         vm_pu=vm_pu, name=name)
+            print(f"Added generator: {name} ({p_mw} MW)")
+        except Exception as e:
+            print(f"Error adding generator {name}: {e}")
+
+    def add_load(self, bus=None, name: str = None, p_mw: float = 0.0, q_mvar: float = 0.0, **kwargs) -> None:
+        """
+        Public method to add a single load to the PandaPower model.
+        Used by tests and external interfaces.
+        
+        @param bus: Bus name or index where load is connected
+        @param name: Load name (optional)
+        @param p_mw: Active power in MW
+        @param q_mvar: Reactive power in Mvar
+        @param kwargs: Additional load parameters
+        """
+        if self._pandapower_model is None:
+            self._pandapower_model = pp.create_empty_network()
+        
+        # Handle bus index (can be int or str)
+        if isinstance(bus, int):
+            bus_idx = bus
+        else:
+            bus_idx = self.__get_bus_index(bus)
+        
+        if bus_idx is None:
+            print(f"Error: Cannot add load {name}, bus {bus} not found")
+            return
+        
+        # Generate name if not provided
+        if name is None:
+            name = f"Load_{bus_idx}"
+        
+        try:
+            pp.create_load(self._pandapower_model, bus=bus_idx, p_mw=p_mw, 
+                          q_mvar=q_mvar, name=name)
+            print(f"Added load: {name} ({p_mw} MW)")
+        except Exception as e:
+            print(f"Error adding load {name}: {e}")
+
+    def add_transformer(self, name: str, hv_bus: str, lv_bus: str, sn_mva: float = 1.0, 
+                       vn_hv_kv: float = None, vn_lv_kv: float = None, **kwargs) -> None:
+        """
+        Public method to add a single transformer to the PandaPower model.
+        Used by tests and external interfaces.
+        
+        @param name: Transformer name
+        @param hv_bus: High voltage bus name
+        @param lv_bus: Low voltage bus name
+        @param sn_mva: Apparent power rating in MVA
+        @param vn_hv_kv: High voltage nominal voltage in kV
+        @param vn_lv_kv: Low voltage nominal voltage in kV
+        @param kwargs: Additional transformer parameters
+        """
+        if self._pandapower_model is None:
+            self._pandapower_model = pp.create_empty_network()
+        
+        hv_bus_idx = self.__get_bus_index(hv_bus)
+        lv_bus_idx = self.__get_bus_index(lv_bus)
+        
+        if hv_bus_idx is None or lv_bus_idx is None:
+            print(f"Error: Cannot add transformer {name}, buses not found")
+            return
+        
+        # Get voltage levels from bus data if not provided
+        if vn_hv_kv is None:
+            vn_hv_kv = self._pandapower_model.bus.vn_kv.iloc[hv_bus_idx]
+        if vn_lv_kv is None:
+            vn_lv_kv = self._pandapower_model.bus.vn_kv.iloc[lv_bus_idx]
+        
+        try:
+            vkr_percent = kwargs.get('vkr_percent', 1.0)
+            vk_percent = kwargs.get('vk_percent', 6.0)
+            
+            pp.create_transformer_from_parameters(
+                self._pandapower_model, hv_bus=hv_bus_idx, lv_bus=lv_bus_idx,
+                sn_mva=sn_mva, vn_hv_kv=vn_hv_kv, vn_lv_kv=vn_lv_kv,
+                vkr_percent=vkr_percent, vk_percent=vk_percent,
+                pfe_kw=sn_mva * 10, i0_percent=0.5, name=name
+            )
+            print(f"Added transformer: {name} ({sn_mva} MVA)")
+        except Exception as e:
+            print(f"Error adding transformer {name}: {e}")
+
+    @property
+    def net(self):
+        """Property to access the pandapower network for compatibility with tests."""
+        return self._pandapower_model

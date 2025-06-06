@@ -1,0 +1,6 @@
+2025-06-06 05:02:58 - root - INFO - Smart Grid Table logging initialized
+2025-06-06 05:02:58 - root - INFO - Log level: INFO
+2025-06-06 05:02:58 - root - INFO - Log to file: True
+2025-06-06 05:02:58 - root - INFO - Log to console: True
+2025-06-06 05:02:58 - SmartGridTable.Main - INFO - Initializing Smart Grid Table Application
+2025-06-06 05:02:58 - SmartGridTable.Main - INFO - Local broker IP set to: 192.168.1.114

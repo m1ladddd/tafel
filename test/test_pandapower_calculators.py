@@ -30,19 +30,19 @@ try:
     print("\nCreëren van calculator-instanties:")
     
     builder = PandapowerNetworkBuilder()
-    print("✅ PandapowerNetworkBuilder instantie aangemaakt")
+    print("PandapowerNetworkBuilder instantie aangemaakt")
     
     lopf = PandapowerCalculatorLOPF()
-    print("✅ PandapowerCalculatorLOPF instantie aangemaakt")
+    print("PandapowerCalculatorLOPF instantie aangemaakt")
     
     lpf = PandapowerCalculatorLPF()
-    print("✅ PandapowerCalculatorLPF instantie aangemaakt")
+    print("PandapowerCalculatorLPF instantie aangemaakt")
     
     pf = PandapowerCalculatorPF()
-    print("✅ PandapowerCalculatorPF instantie aangemaakt")
+    print("PandapowerCalculatorPF instantie aangemaakt")
     
     opt = PandapowerCalculatorOptimize()
-    print("✅ PandapowerCalculatorOptimize instantie aangemaakt")
+    print("PandapowerCalculatorOptimize instantie aangemaakt")
     
     # Controleer beschikbare methoden
     print("\nBeschikbare methoden in PandapowerNetworkBuilder:")
@@ -50,7 +50,7 @@ try:
     for method in methods[:10]:  # Toon de eerste 10 methoden
         print(f"- {method}")
     
-    print("\n✅ Alle pandapower calculator modules zijn succesvol geïmporteerd en getest!")
+    print("\n Alle pandapower calculator modules zijn succesvol geïmporteerd en getest!")
     
 except Exception as e:
     import traceback

@@ -16,6 +16,8 @@ from typing import Optional
 from app_state import AppState
 from config_loader import ConfigLoader
 from input_handling.command_dispatcher import CommandDispatcher
+from mqtt_services.mqtt_manager import MQTTManager
+from utils.logging_config import setup_application_logging, get_main_logger, PerformanceLogger
 
 # Import modules from the src map
 from src.SmartGridTable import SmartGridTable
@@ -29,6 +31,11 @@ class MainApplicationController:
     """Main controller that orchestrates the Smart Grid Table application."""
     
     def __init__(self):
+        # Set up logging first
+        setup_application_logging(log_level="INFO")
+        self.logger = get_main_logger()
+        self.logger.info("Initializing Smart Grid Table Application")
+        
         # Initialize application state
         self.app_state = AppState()
         self.app_state.simulation_mode = "--simulation" in sys.argv
@@ -45,12 +52,21 @@ class MainApplicationController:
         self.proto_mqtt = Prototype_MQTT()
         self.jupyter_mqtt = Jupyter_MQTT()
         
+        # Initialize MQTT manager
+        self.mqtt_manager = MQTTManager(self.app_state, self.config_loader)
+        self.mqtt_manager.set_clients(
+            gui_mqtt=self.gui_mqtt,
+            proto_mqtt=self.proto_mqtt,
+            jupyter_mqtt=self.jupyter_mqtt,
+            table_mqtt=self.table
+        )
+        
         # Initialize command dispatcher with all dependencies
         self.command_dispatcher = CommandDispatcher(
             self.app_state, 
             self.table, 
             self.config_loader,
-            self  # Pass self instead of mqtt_manager
+            self.mqtt_manager
         )
         
         # Initialize UDP broadcaster if local setup
@@ -71,7 +87,7 @@ class MainApplicationController:
             self.app_state.local_broker_ip = "127.0.0.1"
         finally:
             s.close()
-        print(f"Local broker IP set to: {self.app_state.local_broker_ip}")
+        self.logger.info(f"Local broker IP set to: {self.app_state.local_broker_ip}")
         
     def _initialize_system(self):
         """Initialize all system components."""
@@ -115,21 +131,13 @@ class MainApplicationController:
         print("──────────────────── Starting MQTT clients ─────────────────────")
         print("────────────────────────────────────────────────────────────────")
         
-        # Connect MQTT clients
+        # Connect MQTT clients using the manager
         try:
-            broker_ip = self.app_state.local_broker_ip if not self.app_state.simulation_mode else "localhost"
-            
-            # Set broker for each client
-            self.gui_mqtt.mqtt_set_broker(broker_ip)
-            self.proto_mqtt.mqtt_set_broker(broker_ip)
-            self.jupyter_mqtt.mqtt_set_broker(broker_ip)
-            
-            # Connect each client
-            self.gui_mqtt.mqtt_connect()
-            self.proto_mqtt.mqtt_connect()
-            self.jupyter_mqtt.mqtt_connect()
-            
-            print("MQTT clients connected successfully")
+            if self.mqtt_manager.connect_all():
+                print("MQTT clients connected successfully")
+            else:
+                print("WARNING: Some MQTT connections failed")
+                print("Continuing with partial MQTT connectivity")
         except Exception as e:
             print(f"WARNING: MQTT connection failed: {e}")
             print("Continuing without MQTT connectivity")
@@ -242,19 +250,16 @@ class MainApplicationController:
             while self.app_state.is_running:
                 time.sleep(self.app_state.refresh_rate)
                 
-                # 1. Process MQTT messages
-                gui_messages = self.gui_mqtt.message_buffer[:]
-                self.gui_mqtt.message_buffer.clear()
+                # 1. Process MQTT messages via the manager
+                gui_messages = self.mqtt_manager.get_gui_messages()
                 for msg in gui_messages:
                     self.command_dispatcher.dispatch_ui_message(msg)
                     
-                jupyter_messages = self.jupyter_mqtt.message_buffer[:]
-                self.jupyter_mqtt.message_buffer.clear()
+                jupyter_messages = self.mqtt_manager.get_jupyter_messages()
                 for msg_str in jupyter_messages:
                     self.command_dispatcher.dispatch_jupyter_command(msg_str)
                     
-                proto_messages = self.proto_mqtt.message_buffer[:]
-                self.proto_mqtt.message_buffer.clear()
+                proto_messages = self.mqtt_manager.get_proto_messages()
                 for msg_dict in proto_messages:
                     self.command_dispatcher.dispatch_proto_message(msg_dict)
                     
@@ -323,9 +328,7 @@ class MainApplicationController:
             
         print("Disconnecting MQTT clients...")
         self.table.mqtt_disconnect()
-        self.gui_mqtt.mqtt_disconnect()
-        self.proto_mqtt.mqtt_disconnect()
-        self.jupyter_mqtt.mqtt_disconnect()
+        self.mqtt_manager.disconnect_all()
         
         print("Shutting down table simulation...")
         self.table.shutdown()
@@ -343,13 +346,11 @@ class MainApplicationController:
         Publish a message to the GUI MQTT client.
         @param message (str) JSON string message to publish
         """
-        if self.gui_mqtt:
-            self.gui_mqtt.mqtt_publish(message)
+        self.mqtt_manager.publish_to_gui(message)
             
     def publish_to_jupyter(self, message: str):
         """
         Publish a message to the Jupyter MQTT client.
         @param message (str) JSON string message to publish
         """
-        if self.jupyter_mqtt:
-            self.jupyter_mqtt.mqtt_publish(message) 
+        self.mqtt_manager.publish_to_jupyter(message) 
